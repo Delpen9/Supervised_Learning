@@ -8,16 +8,16 @@ import numpy as np
 import pandas as pd
 
 # Modeling Libraries
-import xgboost as xgb
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 
 # Model Evaluation
 from sklearn.metrics import roc_auc_score
 
 
-def tune_xgboost(X, y, n_iter_search=10, cv=5):
+def tune_knn(X, y, n_iter_search=10, cv=5):
     """
-    Tune the hyperparameters of an XGBoost classifier using randomized search.
+    Tune the hyperparameters of a k-NN classifier using randomized search.
 
     Parameters:
     - X : array-like, shape (n_samples, n_features)
@@ -29,29 +29,21 @@ def tune_xgboost(X, y, n_iter_search=10, cv=5):
           Trade-off between runtime vs quality of the solution.
 
     Returns:
-    - best_estimator_ : XGBClassifier
+    - best_estimator_ : KNeighborsClassifier
           Estimator that was chosen by the search.
     """
     param_dist = {
-        "learning_rate": np.linspace(0.01, 1, 100),
-        "n_estimators": np.arange(10, 1000, 5),
-        "subsample": np.linspace(0.1, 1, 10),
-        "max_depth": list(range(1, 11)),
-        "colsample_bytree": np.linspace(0.1, 1, 10),
-        "min_child_weight": list(range(1, 21)),
-        "gamma": np.linspace(0, 0.5, 51),
-        "scale_pos_weight": [
-            1,
-            y[y == 0].shape[0] / y[y == 1].shape[0],
-        ],  # for imbalance
+        "n_neighbors": np.arange(1, 51),
+        "weights": ["uniform", "distance"],
+        "algorithm": ["auto", "ball_tree", "kd_tree", "brute"],
+        "leaf_size": np.arange(1, 51),
+        "p": [1, 2],  # 1: Manhattan distance, 2: Euclidean distance
     }
 
-    classifier = xgb.XGBClassifier(
-        objective="binary:logistic", use_label_encoder=False, eval_metric="logloss"
-    )
+    knn = KNeighborsClassifier()
 
     random_search = RandomizedSearchCV(
-        classifier,
+        knn,
         param_distributions=param_dist,
         n_iter=n_iter_search,
         cv=cv,
@@ -65,13 +57,13 @@ def tune_xgboost(X, y, n_iter_search=10, cv=5):
 
 
 if __name__ == "__main__":
-    data = pd.read_csv("../data/auction_verification_dataset/data.csv")
+    data = pd.read_csv("../../data/auction_verification_dataset/data.csv")
 
     X = data.iloc[:, :-2].copy()
     y = data.iloc[:, -2].copy().astype(int)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-    best_model = tune_xgboost(X_train, y_train, n_iter_search=20)
+    best_model = tune_knn(X_train, y_train, n_iter_search=20)
 
     # Calculate accuracy
     accuracy = best_model.score(X_test, y_test)

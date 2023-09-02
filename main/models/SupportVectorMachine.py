@@ -73,7 +73,7 @@ def tune_svm(X, y, n_iter_search=10, cv=5, max_iteration=10000):
 
 
 if __name__ == "__main__":
-    data = pd.read_csv("../data/auction_verification_dataset/data.csv")
+    data = pd.read_csv("../../data/auction_verification_dataset/data.csv")
 
     X = data.iloc[:, :-2].copy()
     y = data.iloc[:, -2].copy().astype(int)
