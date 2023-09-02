@@ -1,3 +1,7 @@
+# Standard Libraries
+import numpy as np
+import pandas as pd
+
 # PyTorch Modules
 import torch
 import torch.nn as nn
@@ -25,7 +29,19 @@ class BinaryClassifier(nn.Module):
 def tune_neural_network(
     train_loader, val_loader, input_size, num_epochs=10, learning_rate=0.001
 ):
+    pos = torch.tensor([label for _, label in train_loader.dataset]).sum().item()
+    neg = len(train_loader.dataset) - pos
+    class_weights = torch.tensor(
+        [1 / neg, 1 / pos]
+    )
+    class_weights = (
+        class_weights / class_weights.sum()
+    )
+
     model = BinaryClassifier(input_size)
+
+    # Use the weighted loss function
+    criterion = nn.BCELoss(weight=class_weights)
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -95,7 +111,7 @@ if __name__ == "__main__":
     val_dataset, test_dataset = random_split(temp_dataset, [val_size, test_size])
 
     input_size = X.shape[1]
-    num_epochs = 1
+    num_epochs = 200
 
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=32)
@@ -104,5 +120,5 @@ if __name__ == "__main__":
     best_model = tune_neural_network(train_loader, val_loader, input_size, num_epochs)
 
     auc, accuracy = evaluate_model(best_model, test_loader)
-    print(f"Test AUC: {auc:.4f}")
     print(f"Test Accuracy: {accuracy:.4f}")
+    print(f"Test AUC: {auc:.4f}")
