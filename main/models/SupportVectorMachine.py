@@ -13,7 +13,11 @@ from sklearn.model_selection import train_test_split, RandomizedSearchCV
 
 # Model Evaluation
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, make_scorer
+
+
+def multi_class_roc_auc(y_true, y_prob, average="macro"):
+    return roc_auc_score(y_true, y_prob, multi_class="ovr", average=average)
 
 
 def tune_svm(X, y, n_iter_search=50, cv=5, max_iteration=10000):
@@ -33,25 +37,28 @@ def tune_svm(X, y, n_iter_search=50, cv=5, max_iteration=10000):
     - best_estimator_ : LinearSVC
           Estimator that was chosen by the search.
     """
-    param_dist = {
-        "C": np.logspace(-4, 4, 20),
-        "penalty": ["l1", "l2"],
-        "loss": ["hinge", "squared_hinge"],
-        "dual": [
-            True,
-            False,
-        ],
-        "class_weight": [None, "balanced"],  # For imbalance
-        "multi_class": [
-            "ovr",
-            "crammer_singer",
-        ],
-        "fit_intercept": [
-            True,
-            False,
-        ],
-        "intercept_scaling": np.logspace(-4, 4, 20),
-    }
+    param_dist = [
+        {
+            "C": np.logspace(-4, 4, 20),
+            "penalty": ["l2"],
+            "loss": ["hinge", "squared_hinge"],
+            "dual": [True],
+            "class_weight": [None, "balanced"],
+            "multi_class": ["ovr", "crammer_singer"],
+            "fit_intercept": [True, False],
+            "intercept_scaling": np.logspace(-4, 4, 20),
+        },
+        {
+            "C": np.logspace(-4, 4, 20),
+            "penalty": ["l1"],
+            "loss": ["squared_hinge"],
+            "dual": [False],
+            "class_weight": [None, "balanced"],
+            "multi_class": ["ovr", "crammer_singer"],
+            "fit_intercept": [True, False],
+            "intercept_scaling": np.logspace(-4, 4, 20),
+        },
+    ]
 
     classifier = LinearSVC(max_iter=max_iteration)
 
@@ -60,13 +67,15 @@ def tune_svm(X, y, n_iter_search=50, cv=5, max_iteration=10000):
         param_distributions=param_dist,
         n_iter=n_iter_search,
         cv=cv,
-        scoring="roc_auc",
+        scoring=make_scorer(multi_class_roc_auc, needs_proba=True, average="macro"),
         n_jobs=-1,
     )
 
     random_search.fit(X, y)
 
-    best_estimator_prob_ = CalibratedClassifierCV(random_search.best_estimator_, method='sigmoid', cv='prefit')
+    best_estimator_prob_ = CalibratedClassifierCV(
+        random_search.best_estimator_, method="sigmoid", cv="prefit"
+    )
     best_estimator_prob_.fit(X, y)
 
     return random_search.best_estimator_, best_estimator_prob_

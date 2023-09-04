@@ -85,7 +85,7 @@ def evaluate_model(model, test_loader):
             predicted_probs.extend(outputs.numpy())
             true_labels.extend(labels.numpy())
 
-    auc = roc_auc_score(true_labels, predicted_probs)
+    auc = roc_auc_score(true_labels, predicted_probs, multi_class='ovr', average='macro')
     accuracy = accuracy_score(true_labels, predicted_labels)
 
     return auc, accuracy

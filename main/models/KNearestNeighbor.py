@@ -12,7 +12,11 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 
 # Model Evaluation
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, make_scorer
+
+
+def multi_class_roc_auc(y_true, y_prob, average="macro"):
+    return roc_auc_score(y_true, y_prob, multi_class="ovr", average=average)
 
 
 def tune_knn(X, y, n_iter_search=50, cv=5):
@@ -47,7 +51,7 @@ def tune_knn(X, y, n_iter_search=50, cv=5):
         param_distributions=param_dist,
         n_iter=n_iter_search,
         cv=cv,
-        scoring="roc_auc",
+        scoring=make_scorer(multi_class_roc_auc, needs_proba=True, average="macro"),
         n_jobs=-1,
     )
 
