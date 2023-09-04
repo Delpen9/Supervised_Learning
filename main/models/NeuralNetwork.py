@@ -102,6 +102,8 @@ def evaluate_model(model, test_loader, num_classes=2):
     predicted_probs = []
     predicted_labels = []
 
+    softmax = nn.Softmax(dim=1)
+
     with torch.no_grad():
         for inputs, labels in test_loader:
             outputs = model(inputs)
@@ -112,8 +114,9 @@ def evaluate_model(model, test_loader, num_classes=2):
                 predicted_probs.extend(outputs.numpy())
                 true_labels.extend(labels.numpy())
             else:
-                probs, preds = torch.max(nn.functional.softmax(outputs, dim=1), 1)
-                predicted_labels.extend(preds.numpy())
+                probs = softmax(outputs)
+                predicted = torch.argmax(outputs, dim=1)
+                predicted_labels.extend(predicted.numpy())
                 predicted_probs.extend(probs.numpy())
                 true_labels.extend(labels.numpy())
 
