@@ -16,7 +16,7 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import roc_auc_score
 
 
-def tune_svm(X, y, n_iter_search=10, cv=5, max_iteration=10000):
+def tune_svm(X, y, n_iter_search=50, cv=5, max_iteration=10000):
     """
     Tune the hyperparameters of a Linear SVM classifier using randomized search.
 
@@ -67,7 +67,7 @@ def tune_svm(X, y, n_iter_search=10, cv=5, max_iteration=10000):
     random_search.fit(X, y)
 
     best_estimator_prob_ = CalibratedClassifierCV(random_search.best_estimator_, method='sigmoid', cv='prefit')
-    best_estimator_prob_.fit(X_train, y_train)
+    best_estimator_prob_.fit(X, y)
 
     return random_search.best_estimator_, best_estimator_prob_
 

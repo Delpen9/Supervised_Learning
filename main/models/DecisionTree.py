@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.metrics import roc_auc_score
 
 
-def tune_decision_tree(X, y, n_iter_search=10, cv=5):
+def tune_decision_tree(X, y, n_iter_search=50, cv=5):
     """
     Tune the hyperparameters of a decision tree using randomized search.
 
