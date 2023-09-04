@@ -75,12 +75,12 @@ def knn_metrics(X_train, y_train, X_test, y_test, multiclass=False) -> tuple[flo
 
 
 def neural_network_metrics(
-    train_loader, val_loader, test_loader, input_size, num_epochs
+    train_loader, val_loader, test_loader, input_size, num_epochs, learning_rate, multiclass, num_classes
 ) -> tuple[float, float, float, float]:
-    best_model = tune_neural_network(train_loader, val_loader, input_size, num_epochs)
+    best_model = tune_neural_network(train_loader, val_loader, input_size, num_epochs, learning_rate, multiclass, num_classes)
 
-    test_auc, test_accuracy = evaluate_model(best_model, test_loader)
-    train_auc, train_accuracy = evaluate_model(best_model, train_loader)
+    test_auc, test_accuracy = evaluate_model(best_model, test_loader, num_classes)
+    train_auc, train_accuracy = evaluate_model(best_model, train_loader, num_classes)
 
     return test_accuracy, test_auc, train_accuracy, train_auc
 
@@ -343,18 +343,18 @@ def get_student_dropout_model_metrics(
     knn_elapsed_time = end_time - start_time
 
     #############
-    # start_time = time.time()
-    # input_size, num_epochs = X_train.shape[1], 500
-    # (
-    #     nn_test_accuracy,
-    #     nn_test_auc,
-    #     nn_train_accuracy,
-    #     nn_train_auc,
-    # ) = neural_network_metrics(
-    #     train_loader, val_loader, test_loader, input_size, num_epochs
-    # )
-    # end_time = time.time()
-    # nn_elapsed_time = end_time - start_time
+    start_time = time.time()
+    input_size, num_epochs, learning_rate, multiclass, num_classes = X_train.shape[1], 500, 0.001, True, 3
+    (
+        nn_test_accuracy,
+        nn_test_auc,
+        nn_train_accuracy,
+        nn_train_auc,
+    ) = neural_network_metrics(
+        train_loader, val_loader, test_loader, input_size, num_epochs, learning_rate, multiclass, num_classes
+    )
+    end_time = time.time()
+    nn_elapsed_time = end_time - start_time
 
     #############
     start_time = time.time()
@@ -394,14 +394,14 @@ def get_student_dropout_model_metrics(
                 knn_train_auc,
                 knn_elapsed_time,
             ],
-            # [
-            #     "Neural Network",
-            #     nn_test_accuracy,
-            #     nn_test_auc,
-            #     nn_train_accuracy,
-            #     nn_train_auc,
-            #     nn_elapsed_time,
-            # ],
+            [
+                "Neural Network",
+                nn_test_accuracy,
+                nn_test_auc,
+                nn_train_accuracy,
+                nn_train_auc,
+                nn_elapsed_time,
+            ],
             [
                 "Support Vector Machine",
                 svm_test_accuracy,

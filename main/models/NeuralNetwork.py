@@ -25,10 +25,25 @@ class BinaryClassifier(nn.Module):
         x = torch.sigmoid(self.layer3(x))
         return x
 
+class MultiClassClassifier(nn.Module):
+    def __init__(self, input_size, num_classes):
+        super(MultiClassClassifier, self).__init__()
+        self.layer1 = nn.Linear(input_size, 128)
+        self.layer2 = nn.Linear(128, 64)
+        self.layer3 = nn.Linear(64, num_classes)
+
+    def forward(self, x):
+        x = torch.relu(self.layer1(x))
+        x = torch.relu(self.layer2(x))
+        x = self.layer3(x)
+        return x
 
 def tune_neural_network(
-    train_loader, val_loader, input_size, num_epochs=10, learning_rate=0.001
+    train_loader, val_loader, input_size, num_epochs=10, learning_rate=0.001, multiclass=False, num_classes=2
 ):
+    print(multiclass)
+    print(num_classes)
+
     pos = torch.tensor([label for _, label in train_loader.dataset]).sum().item()
     neg = len(train_loader.dataset) - pos
     class_weights = torch.tensor(
@@ -38,18 +53,26 @@ def tune_neural_network(
         class_weights / class_weights.sum()
     )
 
-    model = BinaryClassifier(input_size)
+    if multiclass == False:
+        model = BinaryClassifier(input_size)
+    else:
+        model = MultiClassClassifier(input_size, num_classes)
 
     # Use the weighted loss function
-    criterion = nn.BCELoss(weight=class_weights)
-    criterion = nn.BCELoss()
+    if multiclass == False:
+        criterion = nn.BCELoss(weight=class_weights)
+    else:
+        criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     for epoch in range(num_epochs):
         # Training loop
         for inputs, labels in train_loader:
             outputs = model(inputs)
-            loss = criterion(outputs, labels.unsqueeze(1))
+            if multiclass == False:
+                loss = criterion(outputs, labels.unsqueeze(1).to(torch.long))
+            else:
+                loss = criterion(outputs, labels.to(torch.long))
 
             optimizer.zero_grad()
             loss.backward()
@@ -60,7 +83,10 @@ def tune_neural_network(
         with torch.no_grad():
             for inputs, labels in val_loader:
                 outputs = model(inputs)
-                loss = criterion(outputs, labels.unsqueeze(1))
+                if multiclass == False:
+                    loss = criterion(outputs, labels.unsqueeze(1).to(torch.long))
+                else:
+                    loss = criterion(outputs, labels.to(torch.long))
                 val_loss += loss.item()
 
         print(
@@ -70,7 +96,7 @@ def tune_neural_network(
     return model
 
 
-def evaluate_model(model, test_loader):
+def evaluate_model(model, test_loader, num_classes=2):
     model.eval()
     true_labels = []
     predicted_probs = []
@@ -80,10 +106,16 @@ def evaluate_model(model, test_loader):
         for inputs, labels in test_loader:
             outputs = model(inputs)
 
-            predicted = torch.round(outputs)
-            predicted_labels.extend(predicted.numpy())
-            predicted_probs.extend(outputs.numpy())
-            true_labels.extend(labels.numpy())
+            if num_classes == 2:
+                predicted = torch.round(outputs)
+                predicted_labels.extend(predicted.numpy())
+                predicted_probs.extend(outputs.numpy())
+                true_labels.extend(labels.numpy())
+            else:
+                probs, preds = torch.max(nn.functional.softmax(outputs, dim=1), 1)
+                predicted_labels.extend(preds.numpy())
+                predicted_probs.extend(probs.numpy())
+                true_labels.extend(labels.numpy())
 
     auc = roc_auc_score(true_labels, predicted_probs, multi_class='ovr', average='macro')
     accuracy = accuracy_score(true_labels, predicted_labels)
