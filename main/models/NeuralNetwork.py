@@ -41,18 +41,6 @@ class MultiClassClassifier(nn.Module):
 def tune_neural_network(
     train_loader, val_loader, input_size, num_epochs=10, learning_rate=0.001, multiclass=False, num_classes=2
 ):
-    print(multiclass)
-    print(num_classes)
-
-    pos = torch.tensor([label for _, label in train_loader.dataset]).sum().item()
-    neg = len(train_loader.dataset) - pos
-    class_weights = torch.tensor(
-        [1 / neg, 1 / pos]
-    )
-    class_weights = (
-        class_weights / class_weights.sum()
-    )
-
     if multiclass == False:
         model = BinaryClassifier(input_size)
     else:
@@ -60,7 +48,7 @@ def tune_neural_network(
 
     # Use the weighted loss function
     if multiclass == False:
-        criterion = nn.BCELoss(weight=class_weights)
+        criterion = nn.BCELoss()
     else:
         criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -70,7 +58,7 @@ def tune_neural_network(
         for inputs, labels in train_loader:
             outputs = model(inputs)
             if multiclass == False:
-                loss = criterion(outputs, labels.unsqueeze(1).to(torch.long))
+                loss = criterion(outputs, labels.unsqueeze(1))
             else:
                 loss = criterion(outputs, labels.to(torch.long))
 
@@ -84,7 +72,7 @@ def tune_neural_network(
             for inputs, labels in val_loader:
                 outputs = model(inputs)
                 if multiclass == False:
-                    loss = criterion(outputs, labels.unsqueeze(1).to(torch.long))
+                    loss = criterion(outputs, labels.unsqueeze(1))
                 else:
                     loss = criterion(outputs, labels.to(torch.long))
                 val_loss += loss.item()

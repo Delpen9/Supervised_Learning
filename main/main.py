@@ -705,6 +705,212 @@ def get_auction_percentage_curves() -> None:
     )
 
 
+def get_dropout_percentage_curves() -> None:
+    # Decision Tree - Dropout
+    get_performance_curve(
+        filename="../data/student_dropout_dataset/data.csv",
+        dataset_type="dropout",
+        model="dt",
+        n_iter_search=500,
+        y_bounds=[0.5, 0.9],
+    )
+
+    # XGBoost - Dropout
+    get_performance_curve(
+        filename="../data/student_dropout_dataset/data.csv",
+        dataset_type="dropout",
+        model="xgb",
+        n_iter_search=5,
+        y_bounds=[0.65, 0.9],
+    )
+
+    # SVM - Dropout
+    get_performance_curve(
+        filename="../data/student_dropout_dataset/data.csv",
+        dataset_type="dropout",
+        model="svm",
+        n_iter_search=1,
+        y_bounds=[0.4, 0.9],
+    )
+
+    # KNN - Dropout
+    get_performance_curve(
+        filename="../data/student_dropout_dataset/data.csv",
+        dataset_type="dropout",
+        model="knn",
+        n_iter_search=50,
+        y_bounds=[0.5, 0.8],
+    )
+
+
+def neural_network_percentage_curves(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+    epochs=500,
+    learning_rate=0.001,
+    y_bounds=[0.0, 1.0],
+) -> None:
+    assert filename in [
+        "../data/auction_verification_dataset/data.csv",
+        "../data/student_dropout_dataset/data.csv",
+    ], "filename argument must be in a valid location."
+
+    if filename == "../data/auction_verification_dataset/data.csv":
+        assert (
+            dataset_type == "auction"
+        ), "dataset_type argument must be 'auction' when the filename points to the auction dataset."
+    elif filename == "../data/auction_verification_dataset/data.csv":
+        assert (
+            dataset_type == "dropout"
+        ), "dataset_type argument must be 'dropout' when the filename points to the dropout dataset."
+
+    multiclass = True if dataset_type == "dropout" else False
+
+    if dataset_type == "auction":
+        data = pd.read_csv(filename)
+    elif dataset_type == "dropout":
+        data = pd.read_csv(filename, delimiter=";")
+
+        data["Target"] = data["Target"].replace(
+            {"Graduate": 0, "Dropout": 1, "Enrolled": 2}
+        )
+
+    train_val_df, test_df = train_test_split(data, test_size=0.2, random_state=42)
+    train_df, val_df = train_test_split(train_val_df, test_size=0.125, random_state=42)
+
+    if dataset_type == "auction":
+        X_train = train_df.iloc[:, :-2].copy()
+        y_train = train_df.iloc[:, -2].copy().astype(int)
+
+        X_val = val_df.iloc[:, :-2].copy()
+        y_val = val_df.iloc[:, -2].copy().astype(int)
+
+        X_test = test_df.iloc[:, :-2].copy()
+        y_test = test_df.iloc[:, -2].copy().astype(int)
+    elif dataset_type == "dropout":
+        X_train = train_df.iloc[:, :-1].copy()
+        y_train = train_df.iloc[:, -1].copy().astype(int)
+
+        X_val = val_df.iloc[:, :-1].copy()
+        y_val = val_df.iloc[:, -1].copy().astype(int)
+
+        X_test = test_df.iloc[:, :-1].copy()
+        y_test = test_df.iloc[:, -1].copy().astype(int)
+
+    val_dataset = TensorDataset(
+        torch.tensor(X_val.values, dtype=torch.float32),
+        torch.tensor(y_val.values, dtype=torch.float32),
+    )
+    test_dataset = TensorDataset(
+        torch.tensor(X_test.values, dtype=torch.float32),
+        torch.tensor(y_test.values, dtype=torch.float32),
+    )
+    val_loader = DataLoader(val_dataset, batch_size=32)
+    test_loader = DataLoader(test_dataset, batch_size=32)
+
+    accuracy_per_slice = []
+    auc_per_slice = []
+    for i in range(10):
+        start_index = 0
+        end_index = math.ceil(start_index + ((i + 1) / 10) * X_train.shape[0])
+
+        X_train_slice = X_train.iloc[start_index:end_index, :].copy()
+        y_train_slice = y_train.iloc[start_index:end_index].copy()
+
+        train_dataset = TensorDataset(
+            torch.tensor(X_train_slice.values, dtype=torch.float32),
+            torch.tensor(y_train_slice.values, dtype=torch.float32),
+        )
+        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+
+        if dataset_type == "dropout":
+            input_size, num_epochs, learning_rate, multiclass, num_classes = (
+                X_train_slice.shape[1],
+                epochs,
+                learning_rate,
+                True,
+                3,
+            )
+        elif dataset_type == "auction":
+            input_size, num_epochs, learning_rate, multiclass, num_classes = (
+                X_train_slice.shape[1],
+                epochs,
+                learning_rate,
+                False,
+                2,
+            )
+
+        (
+            test_accuracy,
+            test_auc,
+            _,
+            _,
+        ) = neural_network_metrics(
+            train_loader,
+            val_loader,
+            test_loader,
+            input_size,
+            num_epochs,
+            learning_rate,
+            multiclass,
+            num_classes,
+        )
+
+        accuracy_per_slice.append(test_accuracy)
+        auc_per_slice.append(test_auc)
+
+    accuracy_per_slice = np.round(np.array([accuracy_per_slice]), 3)
+    auc_per_slice = np.round(np.array([auc_per_slice]), 3)
+
+    percentage_training_set_seen = np.array(
+        [rf"{perc}%" for perc in np.arange(10, 110, 10).astype(str)]
+    )
+
+    metrics_np = np.vstack(
+        (accuracy_per_slice, auc_per_slice, percentage_training_set_seen)
+    ).T
+
+    metrics_df = pd.DataFrame(
+        metrics_np,
+        columns=["Test Accuracy", "Test AUC", "Percentage of Training Set Seen"],
+    ).astype({"Test Accuracy": float, "Test AUC": float})
+
+    # Creating the lineplot
+    sns.set(style="whitegrid")
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(
+        x="Percentage of Training Set Seen",
+        y="Test Accuracy",
+        data=metrics_df,
+        label="Test Accuracy",
+    )
+    sns.lineplot(
+        x="Percentage of Training Set Seen",
+        y="Test AUC",
+        data=metrics_df,
+        label="Test AUC",
+    )
+
+    plt.ylim(y_bounds[0], y_bounds[1])
+
+    # Adding titles and labels
+    title = f"Neural Network - {dataset_type.capitalize()} Dataset"
+    title += "\n Test Accuracy and AUC as a Percentage of the Seen Training Set"
+    plt.title(title, fontweight="bold")
+
+    plt.xlabel("Percentage of Training Set Seen")
+    plt.ylabel("Metric Value")
+
+    # Display the legend
+    plt.legend()
+
+    # Save the plot
+    plt.savefig(
+        rf"../outputs/nn_test_acc_auc_performance_curve_{dataset_type}_dataset.png",
+        dpi=300,
+    )
+
+
 if __name__ == "__main__":
     np.random.seed(1234)
 
@@ -712,21 +918,12 @@ if __name__ == "__main__":
     # get_student_dropout_model_metrics()
 
     # get_auction_percentage_curves()
+    # get_dropout_percentage_curves()
 
-    # # Decision Tree - Dropout
-    # get_performance_curve(
-    #     filename="../data/student_dropout_dataset/data.csv",
-    #     dataset_type="dropout",
-    #     model="dt",
-    #     n_iter_search=500,
-    #     y_bounds=[0.5, 0.9],
-    # )
-
-    # XGBoost - Dropout
-    get_performance_curve(
-        filename="../data/student_dropout_dataset/data.csv",
-        dataset_type="dropout",
-        model="xgb",
-        n_iter_search=50,
-        y_bounds=[0.9, 1.01],
+    neural_network_percentage_curves(
+        filename="../data/auction_verification_dataset/data.csv",
+        dataset_type="auction",
+        epochs=500,
+        learning_rate=0.001,
+        y_bounds=[0.6, 1.0],
     )
