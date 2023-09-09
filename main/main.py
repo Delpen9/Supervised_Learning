@@ -924,25 +924,19 @@ def get_neural_network_percentage_curves() -> None:
         dataset_type="dropout",
         epochs=500,
         learning_rate=0.001,
-        y_bounds=[0.0, 1.0],
+        y_bounds=[0.35, 1.0],
     )
 
 
 if __name__ == "__main__":
     np.random.seed(1234)
 
-    # get_auction_verification_model_metrics()
-    # get_student_dropout_model_metrics()
+    get_auction_verification_model_metrics()
+    get_student_dropout_model_metrics()
 
-    # get_auction_percentage_curves()
-    # get_dropout_percentage_curves()
+    get_auction_percentage_curves()
+    get_dropout_percentage_curves()
 
-    # get_neural_network_percentage_curves()
+    get_neural_network_percentage_curves()
 
-    neural_network_percentage_curves(
-        filename="../data/student_dropout_dataset/data.csv",
-        dataset_type="dropout",
-        epochs=500,
-        learning_rate=0.001,
-        y_bounds=[0.0, 1.0],
-    )
+    
