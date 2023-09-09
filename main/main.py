@@ -28,12 +28,13 @@ from tabulate import tabulate
 
 # Python Standard Libraries
 import time
+import math
 
 
 def decision_tree_metrics(
-    X_train, y_train, X_test, y_test, multiclass=False
+    X_train, y_train, X_test, y_test, multiclass=False, n_iter_search=100
 ) -> tuple[float, float, float, float]:
-    best_model = tune_decision_tree(X_train, y_train, n_iter_search=100)
+    best_model = tune_decision_tree(X_train, y_train, n_iter_search=n_iter_search)
 
     test_accuracy = best_model.score(X_test, y_test)
     train_accuracy = best_model.score(X_train, y_train)
@@ -53,8 +54,10 @@ def decision_tree_metrics(
     return test_accuracy, test_auc, train_accuracy, train_auc
 
 
-def knn_metrics(X_train, y_train, X_test, y_test, multiclass=False) -> tuple[float, float, float, float]:
-    best_model = tune_knn(X_train, y_train, n_iter_search=20)
+def knn_metrics(
+    X_train, y_train, X_test, y_test, multiclass=False, n_iter_search=20
+) -> tuple[float, float, float, float]:
+    best_model = tune_knn(X_train, y_train, n_iter_search=n_iter_search)
 
     test_accuracy = best_model.score(X_test, y_test)
     train_accuracy = best_model.score(X_train, y_train)
@@ -75,9 +78,24 @@ def knn_metrics(X_train, y_train, X_test, y_test, multiclass=False) -> tuple[flo
 
 
 def neural_network_metrics(
-    train_loader, val_loader, test_loader, input_size, num_epochs, learning_rate, multiclass, num_classes
+    train_loader,
+    val_loader,
+    test_loader,
+    input_size,
+    num_epochs,
+    learning_rate,
+    multiclass,
+    num_classes,
 ) -> tuple[float, float, float, float]:
-    best_model = tune_neural_network(train_loader, val_loader, input_size, num_epochs, learning_rate, multiclass, num_classes)
+    best_model = tune_neural_network(
+        train_loader,
+        val_loader,
+        input_size,
+        num_epochs,
+        learning_rate,
+        multiclass,
+        num_classes,
+    )
 
     test_auc, test_accuracy = evaluate_model(best_model, test_loader, num_classes)
     train_auc, train_accuracy = evaluate_model(best_model, train_loader, num_classes)
@@ -85,8 +103,12 @@ def neural_network_metrics(
     return test_accuracy, test_auc, train_accuracy, train_auc
 
 
-def svm_metrics(X_train, y_train, X_test, y_test, multiclass=False) -> tuple[float, float, float, float]:
-    best_model, best_model_prob = tune_svm(X_train, y_train, n_iter_search=5)
+def svm_metrics(
+    X_train, y_train, X_test, y_test, multiclass=False, n_iter_search=5
+) -> tuple[float, float, float, float]:
+    best_model, best_model_prob = tune_svm(
+        X_train, y_train, n_iter_search=n_iter_search
+    )
 
     test_accuracy = best_model.score(X_test, y_test)
     train_accuracy = best_model.score(X_train, y_train)
@@ -107,9 +129,9 @@ def svm_metrics(X_train, y_train, X_test, y_test, multiclass=False) -> tuple[flo
 
 
 def xgboost_metrics(
-    X_train, y_train, X_test, y_test, multiclass=False
+    X_train, y_train, X_test, y_test, multiclass=False, n_iter_search=20
 ) -> tuple[float, float, float, float]:
-    best_model = tune_xgboost(X_train, y_train, n_iter_search=20)
+    best_model = tune_xgboost(X_train, y_train, n_iter_search=n_iter_search)
 
     test_accuracy = best_model.score(X_test, y_test)
     train_accuracy = best_model.score(X_train, y_train)
@@ -344,14 +366,27 @@ def get_student_dropout_model_metrics(
 
     #############
     start_time = time.time()
-    input_size, num_epochs, learning_rate, multiclass, num_classes = X_train.shape[1], 500, 0.001, True, 3
+    input_size, num_epochs, learning_rate, multiclass, num_classes = (
+        X_train.shape[1],
+        500,
+        0.001,
+        True,
+        3,
+    )
     (
         nn_test_accuracy,
         nn_test_auc,
         nn_train_accuracy,
         nn_train_auc,
     ) = neural_network_metrics(
-        train_loader, val_loader, test_loader, input_size, num_epochs, learning_rate, multiclass, num_classes
+        train_loader,
+        val_loader,
+        test_loader,
+        input_size,
+        num_epochs,
+        learning_rate,
+        multiclass,
+        num_classes,
     )
     end_time = time.time()
     nn_elapsed_time = end_time - start_time
@@ -443,6 +478,241 @@ def get_student_dropout_model_metrics(
     plt.savefig("../outputs/student_dropout_model_accuracy_auc.png", dpi=300)
 
 
+def get_performance_curve(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+    model="dt",
+    n_iter_search=100,
+    y_bounds=[0.0, 1.0],
+) -> None:
+    assert filename in [
+        "../data/auction_verification_dataset/data.csv",
+        "../data/student_dropout_dataset/data.csv",
+    ], "filename argument must be in a valid location."
+
+    if filename == "../data/auction_verification_dataset/data.csv":
+        assert (
+            dataset_type == "auction"
+        ), "dataset_type argument must be 'auction' when the filename points to the auction dataset."
+    elif filename == "../data/auction_verification_dataset/data.csv":
+        assert (
+            dataset_type == "dropout"
+        ), "dataset_type argument must be 'dropout' when the filename points to the dropout dataset."
+
+    assert model in [
+        "dt",
+        "xgb",
+        "svm",
+        "knn",
+    ], "Model argument must be in ['dt', 'xgb', 'svm', 'knn']."
+
+    multiclass = True if dataset_type == "dropout" else False
+
+    if dataset_type == "auction":
+        data = pd.read_csv(filename)
+    elif dataset_type == "dropout":
+        data = pd.read_csv(filename, delimiter=";")
+
+        data["Target"] = data["Target"].replace(
+            {"Graduate": 0, "Dropout": 1, "Enrolled": 2}
+        )
+
+    train_val_df, test_df = train_test_split(data, test_size=0.2, random_state=42)
+    train_df, val_df = train_test_split(train_val_df, test_size=0.125, random_state=42)
+
+    if dataset_type == "auction":
+        X_train = train_df.iloc[:, :-2].copy()
+        y_train = train_df.iloc[:, -2].copy().astype(int)
+
+        X_val = val_df.iloc[:, :-2].copy()
+        y_val = val_df.iloc[:, -2].copy().astype(int)
+
+        X_test = test_df.iloc[:, :-2].copy()
+        y_test = test_df.iloc[:, -2].copy().astype(int)
+    elif dataset_type == "dropout":
+        X_train = train_df.iloc[:, :-1].copy()
+        y_train = train_df.iloc[:, -1].copy().astype(int)
+
+        X_val = val_df.iloc[:, :-1].copy()
+        y_val = val_df.iloc[:, -1].copy().astype(int)
+
+        X_test = test_df.iloc[:, :-1].copy()
+        y_test = test_df.iloc[:, -1].copy().astype(int)
+
+    accuracy_per_slice = []
+    auc_per_slice = []
+    for i in range(10):
+        start_index = 0
+        end_index = math.ceil(start_index + ((i + 1) / 10) * X_train.shape[0])
+
+        X_train_slice = X_train.iloc[start_index:end_index, :].copy()
+        y_train_slice = y_train.iloc[start_index:end_index].copy()
+
+        if model == "dt":
+            (
+                test_accuracy,
+                test_auc,
+                _,
+                _,
+            ) = decision_tree_metrics(
+                X_train_slice,
+                y_train_slice,
+                X_test,
+                y_test,
+                multiclass=multiclass,
+                n_iter_search=n_iter_search,
+            )
+        elif model == "xgb":
+            (
+                test_accuracy,
+                test_auc,
+                _,
+                _,
+            ) = xgboost_metrics(
+                X_train_slice,
+                y_train_slice,
+                X_test,
+                y_test,
+                multiclass=multiclass,
+                n_iter_search=n_iter_search,
+            )
+        elif model == "svm":
+            (
+                test_accuracy,
+                test_auc,
+                _,
+                _,
+            ) = svm_metrics(
+                X_train_slice,
+                y_train_slice,
+                X_test,
+                y_test,
+                multiclass=multiclass,
+                n_iter_search=n_iter_search,
+            )
+        else:
+            (
+                test_accuracy,
+                test_auc,
+                _,
+                _,
+            ) = knn_metrics(
+                X_train_slice,
+                y_train_slice,
+                X_test,
+                y_test,
+                multiclass=multiclass,
+                n_iter_search=n_iter_search,
+            )
+
+        accuracy_per_slice.append(test_accuracy)
+        auc_per_slice.append(test_auc)
+
+    accuracy_per_slice = np.round(np.array([accuracy_per_slice]), 3)
+    auc_per_slice = np.round(np.array([auc_per_slice]), 3)
+
+    percentage_training_set_seen = np.array(
+        [rf"{perc}%" for perc in np.arange(10, 110, 10).astype(str)]
+    )
+
+    metrics_np = np.vstack(
+        (accuracy_per_slice, auc_per_slice, percentage_training_set_seen)
+    ).T
+
+    metrics_df = pd.DataFrame(
+        metrics_np,
+        columns=["Test Accuracy", "Test AUC", "Percentage of Training Set Seen"],
+    ).astype({"Test Accuracy": float, "Test AUC": float})
+
+    # Creating the lineplot
+    sns.set(style="whitegrid")
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(
+        x="Percentage of Training Set Seen",
+        y="Test Accuracy",
+        data=metrics_df,
+        label="Test Accuracy",
+    )
+    sns.lineplot(
+        x="Percentage of Training Set Seen",
+        y="Test AUC",
+        data=metrics_df,
+        label="Test AUC",
+    )
+
+    plt.ylim(y_bounds[0], y_bounds[1])
+
+    # Adding titles and labels
+    model_map_dict = {
+        "dt": "Decision Tree",
+        "xgb": "XGBoost",
+        "svm": "Support Vector Machine",
+        "knn": "K-Nearest Neighbors"
+    }
+
+    title = f"{model_map_dict[model]} - {dataset_type.capitalize()} Dataset"
+    title += "\n Test Accuracy and AUC as a Percentage of the Seen Training Set"
+    plt.title(title, fontweight='bold')
+
+    plt.xlabel("Percentage of Training Set Seen")
+    plt.ylabel("Metric Value")
+
+    # Display the legend
+    plt.legend()
+
+    # Save the plot
+    plt.savefig(
+        rf"../outputs/{model}_test_acc_auc_performance_curve_{dataset_type}_dataset.png",
+        dpi=300,
+    )
+
+
 if __name__ == "__main__":
+    np.random.seed(1234)
+
     # get_auction_verification_model_metrics()
-    get_student_dropout_model_metrics()
+    # get_student_dropout_model_metrics()
+
+    # For use in PyTorch model
+    # train_dataset = TensorDataset(
+    #     torch.tensor(X_train.values, dtype=torch.float32),
+    #     torch.tensor(y_train.values, dtype=torch.float32),
+    # )
+    # val_dataset = TensorDataset(
+    #     torch.tensor(X_val.values, dtype=torch.float32),
+    #     torch.tensor(y_val.values, dtype=torch.float32),
+    # )
+    # test_dataset = TensorDataset(
+    #     torch.tensor(X_test.values, dtype=torch.float32),
+    #     torch.tensor(y_test.values, dtype=torch.float32),
+    # )
+    # train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    # val_loader = DataLoader(val_dataset, batch_size=32)
+    # test_loader = DataLoader(test_dataset, batch_size=32)
+
+    # Decision Tree - Auction
+    # get_performance_curve(
+    #     filename="../data/auction_verification_dataset/data.csv",
+    #     dataset_type="auction",
+    #     model="dt",
+    #     n_iter_search=500,
+    #     y_bounds=[0.75, 1.0],
+    # )
+
+    # XGBoost - Auction
+    # get_performance_curve(
+    #     filename="../data/auction_verification_dataset/data.csv",
+    #     dataset_type="auction",
+    #     model="xgb",
+    #     n_iter_search=50,
+    #     y_bounds=[0.9, 1.01]
+    # )
+
+    # SVM - Auction
+    get_performance_curve(
+        filename="../data/auction_verification_dataset/data.csv",
+        dataset_type="auction",
+        model="svm",
+        n_iter_search=10,
+        y_bounds=[0.5, 1.0]
+    )
