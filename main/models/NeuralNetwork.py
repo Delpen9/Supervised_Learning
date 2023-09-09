@@ -46,7 +46,6 @@ def tune_neural_network(
     else:
         model = MultiClassClassifier(input_size, num_classes)
 
-    # Use the weighted loss function
     if multiclass == False:
         criterion = nn.BCELoss()
     else:
@@ -75,6 +74,7 @@ def tune_neural_network(
                     loss = criterion(outputs, labels.unsqueeze(1))
                 else:
                     loss = criterion(outputs, labels.to(torch.long))
+                    
                 val_loss += loss.item()
 
         print(

@@ -247,7 +247,7 @@ def get_auction_verification_model_metrics(
                 dt_test_auc,
                 dt_train_accuracy,
                 dt_train_auc,
-                dt_elapsed_time,
+                dt_elapsed_time / 100,
             ],
             [
                 "K-Nearest Neighbors",
@@ -255,7 +255,7 @@ def get_auction_verification_model_metrics(
                 knn_test_auc,
                 knn_train_accuracy,
                 knn_train_auc,
-                knn_elapsed_time,
+                knn_elapsed_time / 20,
             ],
             [
                 "Neural Network",
@@ -263,7 +263,7 @@ def get_auction_verification_model_metrics(
                 nn_test_auc,
                 nn_train_accuracy,
                 nn_train_auc,
-                nn_elapsed_time,
+                nn_elapsed_time / 10,
             ],
             [
                 "Support Vector Machine",
@@ -271,7 +271,7 @@ def get_auction_verification_model_metrics(
                 svm_test_auc,
                 svm_train_accuracy,
                 svm_train_auc,
-                svm_elapsed_time,
+                svm_elapsed_time / 5,
             ],
             [
                 "XGBoost",
@@ -279,7 +279,7 @@ def get_auction_verification_model_metrics(
                 xgb_test_auc,
                 xgb_train_accuracy,
                 xgb_train_auc,
-                xgb_elapsed_time,
+                xgb_elapsed_time / 20,
             ],
         ]
     )
@@ -291,7 +291,7 @@ def get_auction_verification_model_metrics(
             "Test AUC",
             "Train Accuracy",
             "Train AUC",
-            "Time to Train (TTT) [seconds]",
+            "Time to Train (TTT) [seconds / iteration]",
         ],
     )
 
@@ -419,7 +419,7 @@ def get_student_dropout_model_metrics(
                 dt_test_auc,
                 dt_train_accuracy,
                 dt_train_auc,
-                dt_elapsed_time,
+                dt_elapsed_time / 100,
             ],
             [
                 "K-Nearest Neighbors",
@@ -427,7 +427,7 @@ def get_student_dropout_model_metrics(
                 knn_test_auc,
                 knn_train_accuracy,
                 knn_train_auc,
-                knn_elapsed_time,
+                knn_elapsed_time / 20,
             ],
             [
                 "Neural Network",
@@ -435,7 +435,7 @@ def get_student_dropout_model_metrics(
                 nn_test_auc,
                 nn_train_accuracy,
                 nn_train_auc,
-                nn_elapsed_time,
+                nn_elapsed_time / 10,
             ],
             [
                 "Support Vector Machine",
@@ -443,7 +443,7 @@ def get_student_dropout_model_metrics(
                 svm_test_auc,
                 svm_train_accuracy,
                 svm_train_auc,
-                svm_elapsed_time,
+                svm_elapsed_time / 5,
             ],
             [
                 "XGBoost",
@@ -451,7 +451,7 @@ def get_student_dropout_model_metrics(
                 xgb_test_auc,
                 xgb_train_accuracy,
                 xgb_train_auc,
-                xgb_elapsed_time,
+                xgb_elapsed_time / 20,
             ],
         ]
     )
@@ -463,7 +463,7 @@ def get_student_dropout_model_metrics(
             "Test AUC",
             "Train Accuracy",
             "Train AUC",
-            "Time to Train (TTT) [seconds]",
+            "Time to Train (TTT) [seconds / iteration]",
         ],
     )
 
@@ -910,6 +910,23 @@ def neural_network_percentage_curves(
         dpi=300,
     )
 
+def get_neural_network_percentage_curves() -> None:
+    neural_network_percentage_curves(
+        filename="../data/auction_verification_dataset/data.csv",
+        dataset_type="auction",
+        epochs=500,
+        learning_rate=0.001,
+        y_bounds=[0.7, 1.0],
+    )
+
+    neural_network_percentage_curves(
+        filename="../data/student_dropout_dataset/data.csv",
+        dataset_type="dropout",
+        epochs=500,
+        learning_rate=0.001,
+        y_bounds=[0.0, 1.0],
+    )
+
 
 if __name__ == "__main__":
     np.random.seed(1234)
@@ -920,10 +937,12 @@ if __name__ == "__main__":
     # get_auction_percentage_curves()
     # get_dropout_percentage_curves()
 
+    # get_neural_network_percentage_curves()
+
     neural_network_percentage_curves(
-        filename="../data/auction_verification_dataset/data.csv",
-        dataset_type="auction",
+        filename="../data/student_dropout_dataset/data.csv",
+        dataset_type="dropout",
         epochs=500,
         learning_rate=0.001,
-        y_bounds=[0.6, 1.0],
+        y_bounds=[0.0, 1.0],
     )
