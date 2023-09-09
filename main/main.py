@@ -207,14 +207,27 @@ def get_auction_verification_model_metrics(
 
     #############
     start_time = time.time()
-    input_size, num_epochs = X_train.shape[1], 500
+    input_size, num_epochs, learning_rate, multiclass, num_classes = (
+        X_train.shape[1],
+        500,
+        0.001,
+        False,
+        2,
+    )
     (
         nn_test_accuracy,
         nn_test_auc,
         nn_train_accuracy,
         nn_train_auc,
     ) = neural_network_metrics(
-        train_loader, val_loader, test_loader, input_size, num_epochs
+        train_loader,
+        val_loader,
+        test_loader,
+        input_size,
+        num_epochs,
+        learning_rate,
+        multiclass,
+        num_classes,
     )
     end_time = time.time()
     nn_elapsed_time = end_time - start_time
@@ -263,7 +276,7 @@ def get_auction_verification_model_metrics(
                 nn_test_auc,
                 nn_train_accuracy,
                 nn_train_auc,
-                nn_elapsed_time / 10,
+                nn_elapsed_time / 500,
             ],
             [
                 "Support Vector Machine",
@@ -435,7 +448,7 @@ def get_student_dropout_model_metrics(
                 nn_test_auc,
                 nn_train_accuracy,
                 nn_train_auc,
-                nn_elapsed_time / 10,
+                nn_elapsed_time / 500,
             ],
             [
                 "Support Vector Machine",
@@ -934,13 +947,14 @@ if __name__ == "__main__":
     get_auction_verification_model_metrics()
     get_student_dropout_model_metrics()
 
-    get_auction_percentage_curves()
-    get_dropout_percentage_curves()
+    # get_auction_percentage_curves()
+    # get_dropout_percentage_curves()
 
-    get_neural_network_percentage_curves()
+    # get_neural_network_percentage_curves()
 
-    ## TODO: Get Best Models, save them as artifacts,
+    ## TODO: Rerun 2 model_metrics() functions, get best models, save them as artifacts,
     ## and use this to get hyperparameter information and feature importances (i.e. SHAP)
     ## %
-    
+    ##
+    ##
     ## %
