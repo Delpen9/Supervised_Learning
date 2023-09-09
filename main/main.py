@@ -647,12 +647,12 @@ def get_performance_curve(
         "dt": "Decision Tree",
         "xgb": "XGBoost",
         "svm": "Support Vector Machine",
-        "knn": "K-Nearest Neighbors"
+        "knn": "K-Nearest Neighbors",
     }
 
     title = f"{model_map_dict[model]} - {dataset_type.capitalize()} Dataset"
     title += "\n Test Accuracy and AUC as a Percentage of the Seen Training Set"
-    plt.title(title, fontweight='bold')
+    plt.title(title, fontweight="bold")
 
     plt.xlabel("Percentage of Training Set Seen")
     plt.ylabel("Metric Value")
@@ -667,52 +667,66 @@ def get_performance_curve(
     )
 
 
-if __name__ == "__main__":
-    np.random.seed(1234)
-
-    # get_auction_verification_model_metrics()
-    # get_student_dropout_model_metrics()
-
-    # For use in PyTorch model
-    # train_dataset = TensorDataset(
-    #     torch.tensor(X_train.values, dtype=torch.float32),
-    #     torch.tensor(y_train.values, dtype=torch.float32),
-    # )
-    # val_dataset = TensorDataset(
-    #     torch.tensor(X_val.values, dtype=torch.float32),
-    #     torch.tensor(y_val.values, dtype=torch.float32),
-    # )
-    # test_dataset = TensorDataset(
-    #     torch.tensor(X_test.values, dtype=torch.float32),
-    #     torch.tensor(y_test.values, dtype=torch.float32),
-    # )
-    # train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    # val_loader = DataLoader(val_dataset, batch_size=32)
-    # test_loader = DataLoader(test_dataset, batch_size=32)
-
+def get_auction_percentage_curves() -> None:
     # Decision Tree - Auction
-    # get_performance_curve(
-    #     filename="../data/auction_verification_dataset/data.csv",
-    #     dataset_type="auction",
-    #     model="dt",
-    #     n_iter_search=500,
-    #     y_bounds=[0.75, 1.0],
-    # )
+    get_performance_curve(
+        filename="../data/auction_verification_dataset/data.csv",
+        dataset_type="auction",
+        model="dt",
+        n_iter_search=500,
+        y_bounds=[0.75, 1.0],
+    )
 
     # XGBoost - Auction
-    # get_performance_curve(
-    #     filename="../data/auction_verification_dataset/data.csv",
-    #     dataset_type="auction",
-    #     model="xgb",
-    #     n_iter_search=50,
-    #     y_bounds=[0.9, 1.01]
-    # )
+    get_performance_curve(
+        filename="../data/auction_verification_dataset/data.csv",
+        dataset_type="auction",
+        model="xgb",
+        n_iter_search=50,
+        y_bounds=[0.9, 1.01],
+    )
 
     # SVM - Auction
     get_performance_curve(
         filename="../data/auction_verification_dataset/data.csv",
         dataset_type="auction",
         model="svm",
-        n_iter_search=10,
-        y_bounds=[0.5, 1.0]
+        n_iter_search=5,
+        y_bounds=[0.5, 1.0],
+    )
+
+    # KNN - Auction
+    get_performance_curve(
+        filename="../data/auction_verification_dataset/data.csv",
+        dataset_type="auction",
+        model="knn",
+        n_iter_search=20,
+        y_bounds=[0.85, 1.01],
+    )
+
+
+if __name__ == "__main__":
+    np.random.seed(1234)
+
+    # get_auction_verification_model_metrics()
+    # get_student_dropout_model_metrics()
+
+    # get_auction_percentage_curves()
+
+    # # Decision Tree - Dropout
+    # get_performance_curve(
+    #     filename="../data/student_dropout_dataset/data.csv",
+    #     dataset_type="dropout",
+    #     model="dt",
+    #     n_iter_search=500,
+    #     y_bounds=[0.5, 0.9],
+    # )
+
+    # XGBoost - Dropout
+    get_performance_curve(
+        filename="../data/student_dropout_dataset/data.csv",
+        dataset_type="dropout",
+        model="xgb",
+        n_iter_search=50,
+        y_bounds=[0.9, 1.01],
     )
