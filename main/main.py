@@ -52,9 +52,15 @@ if __name__ == "__main__":
             dataset_type="dropout",
         )
 
-    ## TODO: Get decision boundary illustrations for each best model
-    ## TODO: Get individual model performance values by varying individual features (i.e. ccp_alpha for decision tree)
-    ## TODO: Get univariate and multivariate descriptive statistics of the datasets against each other and their targets
+    ## TODO: Get best neural network and get SHAP for it.
+    ## TODO: Get decision boundary illustrations for each best model.
+    ## TODO: Get individual model performance values by varying individual features
+    ## i.e. ccp_alpha for decision tree
+    ## i.e. learning_rate for neural_network
+    ## TODO: Get univariate and multivariate descriptive statistics of the datasets against each other and their targets.
+    ## TODO: Current KNN plots show results without pre-processing; do pre-processing and compare new performance.
+    ## !!!!REQUIRED TODO: Show training/validation curve for neural network to show when it begins to overfit.
+    ## TODO: Get graph that shows average performance over specific iteration counts. (10 vs. 100 vs. 500)
     ## %
     ##
     ##
