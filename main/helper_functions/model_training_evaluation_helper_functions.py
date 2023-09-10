@@ -33,6 +33,23 @@ import math
 # Saving Models
 import joblib
 
+
+def filename_dataset_assertions(filename=None, dataset_type=None) -> None:
+    assert filename in [
+        "../data/auction_verification_dataset/data.csv",
+        "../data/student_dropout_dataset/data.csv",
+    ], "filename argument must be in a valid location."
+
+    if filename == "../data/auction_verification_dataset/data.csv":
+        assert (
+            dataset_type == "auction"
+        ), "dataset_type argument must be 'auction' when the filename points to the auction dataset."
+    elif filename == "../data/auction_verification_dataset/data.csv":
+        assert (
+            dataset_type == "dropout"
+        ), "dataset_type argument must be 'dropout' when the filename points to the dropout dataset."
+
+
 def decision_tree_metrics(
     X_train, y_train, X_test, y_test, multiclass=False, n_iter_search=100
 ) -> tuple[float, float, float, float]:
@@ -500,19 +517,7 @@ def get_performance_curve(
     n_iter_search=100,
     y_bounds=[0.0, 1.0],
 ) -> None:
-    assert filename in [
-        "../data/auction_verification_dataset/data.csv",
-        "../data/student_dropout_dataset/data.csv",
-    ], "filename argument must be in a valid location."
-
-    if filename == "../data/auction_verification_dataset/data.csv":
-        assert (
-            dataset_type == "auction"
-        ), "dataset_type argument must be 'auction' when the filename points to the auction dataset."
-    elif filename == "../data/auction_verification_dataset/data.csv":
-        assert (
-            dataset_type == "dropout"
-        ), "dataset_type argument must be 'dropout' when the filename points to the dropout dataset."
+    filename_dataset_assertions(filename, dataset_type)
 
     assert model in [
         "dt",
@@ -765,19 +770,7 @@ def neural_network_percentage_curves(
     learning_rate=0.001,
     y_bounds=[0.0, 1.0],
 ) -> None:
-    assert filename in [
-        "../data/auction_verification_dataset/data.csv",
-        "../data/student_dropout_dataset/data.csv",
-    ], "filename argument must be in a valid location."
-
-    if filename == "../data/auction_verification_dataset/data.csv":
-        assert (
-            dataset_type == "auction"
-        ), "dataset_type argument must be 'auction' when the filename points to the auction dataset."
-    elif filename == "../data/auction_verification_dataset/data.csv":
-        assert (
-            dataset_type == "dropout"
-        ), "dataset_type argument must be 'dropout' when the filename points to the dropout dataset."
+    filename_dataset_assertions(filename, dataset_type)
 
     multiclass = True if dataset_type == "dropout" else False
 
@@ -951,19 +944,7 @@ def get_best_model(
     n_iter_search=100,
     save_path="../artifacts",
 ) -> None:
-    assert filename in [
-        "../data/auction_verification_dataset/data.csv",
-        "../data/student_dropout_dataset/data.csv",
-    ], "filename argument must be in a valid location."
-
-    if filename == "../data/auction_verification_dataset/data.csv":
-        assert (
-            dataset_type == "auction"
-        ), "dataset_type argument must be 'auction' when the filename points to the auction dataset."
-    elif filename == "../data/auction_verification_dataset/data.csv":
-        assert (
-            dataset_type == "dropout"
-        ), "dataset_type argument must be 'dropout' when the filename points to the dropout dataset."
+    filename_dataset_assertions(filename, dataset_type)
 
     assert model in [
         "dt",
@@ -1022,19 +1003,7 @@ def get_best_model(
 def get_all_best_models(
     filename="../data/auction_verification_dataset/data.csv", dataset_type="auction"
 ) -> None:
-    assert filename in [
-        "../data/auction_verification_dataset/data.csv",
-        "../data/student_dropout_dataset/data.csv",
-    ], "filename argument must be in a valid location."
-
-    if filename == "../data/auction_verification_dataset/data.csv":
-        assert (
-            dataset_type == "auction"
-        ), "dataset_type argument must be 'auction' when the filename points to the auction dataset."
-    elif filename == "../data/auction_verification_dataset/data.csv":
-        assert (
-            dataset_type == "dropout"
-        ), "dataset_type argument must be 'dropout' when the filename points to the dropout dataset."
+    filename_dataset_assertions(filename, dataset_type)
 
     models = ["dt", "xgb", "svm", "knn"]
 
