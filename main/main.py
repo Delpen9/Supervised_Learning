@@ -13,13 +13,14 @@ from helper_functions.model_training_evaluation_helper_functions import (
 )
 from helper_functions.feature_importance_decision_boundaries_helper_functions import (
     load_models,
+    get_all_model_SHAP,
 )
 
 if __name__ == "__main__":
     np.random.seed(1234)
 
     # run_cases = np.arange(1, 10).astype(int) # Run all cases
-    run_cases = [6]
+    run_cases = [5]
 
     if 1 in run_cases:
         get_auction_verification_model_metrics()
@@ -42,17 +43,13 @@ if __name__ == "__main__":
         )
 
     if 5 in run_cases:
-        best_model_dt, best_model_xgb, best_model_svm, best_model_knn = load_models(
+        get_all_model_SHAP(
             filename="../data/auction_verification_dataset/data.csv",
             dataset_type="auction",
         )
-
-    if 6 in run_cases:
-        get_model_SHAP(
-            filename="../data/auction_verification_dataset/data.csv",
-            dataset_type="auction",
-            model="dt",
-            model_object=best_model_dt,
+        get_all_model_SHAP(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
         )
 
     ## TODO: Get hyperparameter information and feature importances (i.e. SHAP)

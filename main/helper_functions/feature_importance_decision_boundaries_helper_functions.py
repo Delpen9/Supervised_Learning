@@ -33,8 +33,13 @@ import math
 # Saving Models
 import joblib
 
+# Feature Explanations
+import shap
+
 # Helper Functions
-from helper_functions.model_training_evaluation_helper_functions import get_all_best_models
+from helper_functions.model_training_evaluation_helper_functions import (
+    get_all_best_models,
+)
 
 
 def filename_dataset_assertions(filename=None, dataset_type=None) -> None:
@@ -51,6 +56,50 @@ def filename_dataset_assertions(filename=None, dataset_type=None) -> None:
         assert (
             dataset_type == "dropout"
         ), "dataset_type argument must be 'dropout' when the filename points to the dropout dataset."
+
+
+def data_loading(
+    filename=None, dataset_type=None
+) -> tuple[
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+]:
+    if dataset_type == "auction":
+        data = pd.read_csv(filename)
+    elif dataset_type == "dropout":
+        data = pd.read_csv(filename, delimiter=";")
+
+        data["Target"] = data["Target"].replace(
+            {"Graduate": 0, "Dropout": 1, "Enrolled": 2}
+        )
+
+    train_val_df, test_df = train_test_split(data, test_size=0.2, random_state=42)
+    train_df, val_df = train_test_split(train_val_df, test_size=0.125, random_state=42)
+
+    if dataset_type == "auction":
+        X_train = train_df.iloc[:, :-2].copy()
+        y_train = train_df.iloc[:, -2].copy().astype(int)
+
+        X_val = val_df.iloc[:, :-2].copy()
+        y_val = val_df.iloc[:, -2].copy().astype(int)
+
+        X_test = test_df.iloc[:, :-2].copy()
+        y_test = test_df.iloc[:, -2].copy().astype(int)
+    elif dataset_type == "dropout":
+        X_train = train_df.iloc[:, :-1].copy()
+        y_train = train_df.iloc[:, -1].copy().astype(int)
+
+        X_val = val_df.iloc[:, :-1].copy()
+        y_val = val_df.iloc[:, -1].copy().astype(int)
+
+        X_test = test_df.iloc[:, :-1].copy()
+        y_test = test_df.iloc[:, -1].copy().astype(int)
+
+    return (X_train, y_train, X_val, y_val, X_test, y_test)
 
 
 def load_models(
@@ -101,4 +150,50 @@ def get_model_SHAP(
         "knn",
     ], "Model argument must be in ['dt', 'xgb', 'svm', 'knn']."
 
-    return None
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
+    )
+
+    explainer = shap.Explainer(model_object, X_train)
+    shap_values = explainer.shap_values(X_test)
+
+    shap.summary_plot(shap_values, X_test)
+
+    plt.savefig(f"../outputs/SHAP/{model}_SHAP_{dataset_type}.png")
+
+
+def get_all_model_SHAP(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+) -> None:
+    filename_dataset_assertions(filename, dataset_type)
+
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
+    )
+
+    best_model_dt, best_model_xgb, best_model_svm, best_model_knn = load_models(
+        filename=filename,
+        dataset_type=dataset_type,
+    )
+
+    model_object_list = [best_model_dt, best_model_xgb, best_model_svm[0], best_model_knn]
+    model_list = ["dt", "xgb", "svm", "knn"]
+
+    for model_object, model in zip(model_object_list, model_list):
+        if model == "svm":
+            explainer = shap.KernelExplainer(model_object._predict_proba_lr, shap.sample(X_train, 100))
+        elif model == "knn":
+            explainer = shap.KernelExplainer(model_object.predict_proba, shap.sample(X_train, 100))
+        else:
+            explainer = shap.Explainer(model_object, X_train)
+
+        if model == "svm":
+            shap_values = explainer.shap_values(X_test, nsamples=100)
+        else:
+            shap_values = explainer.shap_values(X_test)
+
+        shap.summary_plot(shap_values, X_test)
+
+        plt.savefig(f"../outputs/SHAP/{model}_SHAP_{dataset_type}.png")
+        plt.clf()

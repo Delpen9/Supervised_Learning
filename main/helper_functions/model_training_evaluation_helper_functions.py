@@ -50,6 +50,50 @@ def filename_dataset_assertions(filename=None, dataset_type=None) -> None:
         ), "dataset_type argument must be 'dropout' when the filename points to the dropout dataset."
 
 
+def data_loading(
+    filename=None, dataset_type=None
+) -> tuple[
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+]:
+    if dataset_type == "auction":
+        data = pd.read_csv(filename)
+    elif dataset_type == "dropout":
+        data = pd.read_csv(filename, delimiter=";")
+
+        data["Target"] = data["Target"].replace(
+            {"Graduate": 0, "Dropout": 1, "Enrolled": 2}
+        )
+
+    train_val_df, test_df = train_test_split(data, test_size=0.2, random_state=42)
+    train_df, val_df = train_test_split(train_val_df, test_size=0.125, random_state=42)
+
+    if dataset_type == "auction":
+        X_train = train_df.iloc[:, :-2].copy()
+        y_train = train_df.iloc[:, -2].copy().astype(int)
+
+        X_val = val_df.iloc[:, :-2].copy()
+        y_val = val_df.iloc[:, -2].copy().astype(int)
+
+        X_test = test_df.iloc[:, :-2].copy()
+        y_test = test_df.iloc[:, -2].copy().astype(int)
+    elif dataset_type == "dropout":
+        X_train = train_df.iloc[:, :-1].copy()
+        y_train = train_df.iloc[:, -1].copy().astype(int)
+
+        X_val = val_df.iloc[:, :-1].copy()
+        y_val = val_df.iloc[:, -1].copy().astype(int)
+
+        X_test = test_df.iloc[:, :-1].copy()
+        y_test = test_df.iloc[:, -1].copy().astype(int)
+
+    return (X_train, y_train, X_val, y_val, X_test, y_test)
+
+
 def decision_tree_metrics(
     X_train, y_train, X_test, y_test, multiclass=False, n_iter_search=100
 ) -> tuple[float, float, float, float]:
@@ -171,22 +215,11 @@ def xgboost_metrics(
 
 
 def get_auction_verification_model_metrics(
-    filename="../data/auction_verification_dataset/data.csv",
+    filename="../data/auction_verification_dataset/data.csv", dataset_type="auction"
 ) -> None:
-    data = pd.read_csv(filename)
-
-    train_val_df, test_df = train_test_split(data, test_size=0.2, random_state=42)
-    train_df, val_df = train_test_split(train_val_df, test_size=0.125, random_state=42)
-
-    # For use in scikit-learn models
-    X_train = train_df.iloc[:, :-2].copy()
-    y_train = train_df.iloc[:, -2].copy().astype(int)
-
-    X_val = val_df.iloc[:, :-2].copy()
-    y_val = val_df.iloc[:, -2].copy().astype(int)
-
-    X_test = test_df.iloc[:, :-2].copy()
-    y_test = test_df.iloc[:, -2].copy().astype(int)
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
+    )
 
     # For use in PyTorch model
     train_dataset = TensorDataset(
@@ -339,26 +372,11 @@ def get_auction_verification_model_metrics(
 
 
 def get_student_dropout_model_metrics(
-    filename="../data/student_dropout_dataset/data.csv",
+    filename="../data/student_dropout_dataset/data.csv", dataset_type="dropout"
 ) -> None:
-    data = pd.read_csv(filename, delimiter=";")
-
-    data["Target"] = data["Target"].replace(
-        {"Graduate": 0, "Dropout": 1, "Enrolled": 2}
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
     )
-
-    train_val_df, test_df = train_test_split(data, test_size=0.2, random_state=42)
-    train_df, val_df = train_test_split(train_val_df, test_size=0.125, random_state=42)
-
-    # For use in scikit-learn models
-    X_train = train_df.iloc[:, :-1].copy()
-    y_train = train_df.iloc[:, -1].copy().astype(int)
-
-    X_val = val_df.iloc[:, :-1].copy()
-    y_val = val_df.iloc[:, -1].copy().astype(int)
-
-    X_test = test_df.iloc[:, :-1].copy()
-    y_test = test_df.iloc[:, -1].copy().astype(int)
 
     # For use in PyTorch model
     train_dataset = TensorDataset(
