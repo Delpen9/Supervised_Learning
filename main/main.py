@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 # Helper Functions
-from model_training_evaluation_helper_functions import (
+from helper_functions.model_training_evaluation_helper_functions import (
     get_auction_verification_model_metrics,
     get_student_dropout_model_metrics,
     get_auction_percentage_curves,
