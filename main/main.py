@@ -13,7 +13,7 @@ from helper_functions.model_training_evaluation_helper_functions import (
 )
 from helper_functions.feature_importance_decision_boundaries_helper_functions import (
     load_models,
-    get_all_model_SHAP,
+    get_all_models_SHAP,
 )
 
 if __name__ == "__main__":
@@ -43,17 +43,18 @@ if __name__ == "__main__":
         )
 
     if 5 in run_cases:
-        get_all_model_SHAP(
+        get_all_models_SHAP(
             filename="../data/auction_verification_dataset/data.csv",
             dataset_type="auction",
         )
-        get_all_model_SHAP(
+        get_all_models_SHAP(
             filename="../data/student_dropout_dataset/data.csv",
             dataset_type="dropout",
         )
 
-    ## TODO: Get hyperparameter information and feature importances (i.e. SHAP)
-    ## Consider getting decision boundary illustrations for each model; this may involve PCA
+    ## TODO: Get decision boundary illustrations for each best model
+    ## TODO: Get individual model performance values by varying individual features (i.e. ccp_alpha for decision tree)
+    ## TODO: Get univariate and multivariate descriptive statistics of the datasets against each other and their targets
     ## %
     ##
     ##

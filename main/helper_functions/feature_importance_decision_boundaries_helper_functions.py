@@ -154,23 +154,27 @@ def get_model_SHAP(
         filename, dataset_type
     )
 
-    explainer = shap.Explainer(model_object, X_train)
-    shap_values = explainer.shap_values(X_test)
+    if model == "svm":
+        explainer = shap.KernelExplainer(model_object._predict_proba_lr, shap.sample(X_train, 100))
+        shap_values = explainer.shap_values(X_test, nsamples=100)
+    elif model == "knn":
+        explainer = shap.KernelExplainer(model_object.predict_proba, shap.sample(X_train, 100))
+        shap_values = explainer.shap_values(X_test, nsamples=100)
+    else:
+        explainer = shap.Explainer(model_object, X_train)
+        shap_values = explainer.shap_values(X_test)
 
     shap.summary_plot(shap_values, X_test)
 
     plt.savefig(f"../outputs/SHAP/{model}_SHAP_{dataset_type}.png")
+    plt.clf()
 
 
-def get_all_model_SHAP(
+def get_all_models_SHAP(
     filename="../data/auction_verification_dataset/data.csv",
     dataset_type="auction",
 ) -> None:
     filename_dataset_assertions(filename, dataset_type)
-
-    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
-        filename, dataset_type
-    )
 
     best_model_dt, best_model_xgb, best_model_svm, best_model_knn = load_models(
         filename=filename,
@@ -181,19 +185,9 @@ def get_all_model_SHAP(
     model_list = ["dt", "xgb", "svm", "knn"]
 
     for model_object, model in zip(model_object_list, model_list):
-        if model == "svm":
-            explainer = shap.KernelExplainer(model_object._predict_proba_lr, shap.sample(X_train, 100))
-        elif model == "knn":
-            explainer = shap.KernelExplainer(model_object.predict_proba, shap.sample(X_train, 100))
-        else:
-            explainer = shap.Explainer(model_object, X_train)
-
-        if model == "svm":
-            shap_values = explainer.shap_values(X_test, nsamples=100)
-        else:
-            shap_values = explainer.shap_values(X_test)
-
-        shap.summary_plot(shap_values, X_test)
-
-        plt.savefig(f"../outputs/SHAP/{model}_SHAP_{dataset_type}.png")
-        plt.clf()
+        get_model_SHAP(
+            filename=filename,
+            dataset_type=dataset_type,
+            model=model,
+            model_object=model_object,
+        )
