@@ -15,9 +15,9 @@ from helper_functions.model_training_evaluation_helper_functions import (
 if __name__ == "__main__":
     np.random.seed(1234)
 
-    # run_cases = np.arange(1, 10).astype(int)
+    # run_cases = np.arange(1, 10).astype(int) # Run all cases
     run_cases = []
-    
+
     if 1 in run_cases:
         get_auction_verification_model_metrics()
         get_student_dropout_model_metrics()
