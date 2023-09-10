@@ -30,6 +30,9 @@ from tabulate import tabulate
 import time
 import math
 
+# Saving Models
+import joblib
+
 
 def decision_tree_metrics(
     X_train, y_train, X_test, y_test, multiclass=False, n_iter_search=100
@@ -923,6 +926,7 @@ def neural_network_percentage_curves(
         dpi=300,
     )
 
+
 def get_neural_network_percentage_curves() -> None:
     neural_network_percentage_curves(
         filename="../data/auction_verification_dataset/data.csv",
@@ -941,19 +945,135 @@ def get_neural_network_percentage_curves() -> None:
     )
 
 
+def get_best_model(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+    model="dt",
+    n_iter_search=100,
+    save_path="../artifacts",
+) -> None:
+    assert filename in [
+        "../data/auction_verification_dataset/data.csv",
+        "../data/student_dropout_dataset/data.csv",
+    ], "filename argument must be in a valid location."
+
+    if filename == "../data/auction_verification_dataset/data.csv":
+        assert (
+            dataset_type == "auction"
+        ), "dataset_type argument must be 'auction' when the filename points to the auction dataset."
+    elif filename == "../data/auction_verification_dataset/data.csv":
+        assert (
+            dataset_type == "dropout"
+        ), "dataset_type argument must be 'dropout' when the filename points to the dropout dataset."
+
+    assert model in [
+        "dt",
+        "xgb",
+        "svm",
+        "knn",
+    ], "Model argument must be in ['dt', 'xgb', 'svm', 'knn']."
+
+    save_path += f"/best_model_{dataset_type}_{model}.pkl"
+
+    multiclass = True if dataset_type == "dropout" else False
+
+    if dataset_type == "auction":
+        data = pd.read_csv(filename)
+    elif dataset_type == "dropout":
+        data = pd.read_csv(filename, delimiter=";")
+
+        data["Target"] = data["Target"].replace(
+            {"Graduate": 0, "Dropout": 1, "Enrolled": 2}
+        )
+
+    train_val_df, test_df = train_test_split(data, test_size=0.2, random_state=42)
+    train_df, val_df = train_test_split(train_val_df, test_size=0.125, random_state=42)
+
+    if dataset_type == "auction":
+        X_train = train_df.iloc[:, :-2].copy()
+        y_train = train_df.iloc[:, -2].copy().astype(int)
+
+        X_val = val_df.iloc[:, :-2].copy()
+        y_val = val_df.iloc[:, -2].copy().astype(int)
+
+        X_test = test_df.iloc[:, :-2].copy()
+        y_test = test_df.iloc[:, -2].copy().astype(int)
+    elif dataset_type == "dropout":
+        X_train = train_df.iloc[:, :-1].copy()
+        y_train = train_df.iloc[:, -1].copy().astype(int)
+
+        X_val = val_df.iloc[:, :-1].copy()
+        y_val = val_df.iloc[:, -1].copy().astype(int)
+
+        X_test = test_df.iloc[:, :-1].copy()
+        y_test = test_df.iloc[:, -1].copy().astype(int)
+
+    if model == "dt":
+        best_model = tune_decision_tree(X_train, y_train, n_iter_search=n_iter_search)
+    elif model == "xgb":
+        best_model = tune_xgboost(X_train, y_train, n_iter_search=n_iter_search)
+    elif model == "svm":
+        best_model = tune_svm(X_train, y_train, n_iter_search=n_iter_search)
+    else:
+        best_model = tune_knn(X_train, y_train, n_iter_search=n_iter_search)
+
+    joblib.dump(best_model, save_path)
+
+
+def get_all_best_models(
+    filename="../data/auction_verification_dataset/data.csv", dataset_type="auction"
+) -> None:
+    assert filename in [
+        "../data/auction_verification_dataset/data.csv",
+        "../data/student_dropout_dataset/data.csv",
+    ], "filename argument must be in a valid location."
+
+    if filename == "../data/auction_verification_dataset/data.csv":
+        assert (
+            dataset_type == "auction"
+        ), "dataset_type argument must be 'auction' when the filename points to the auction dataset."
+    elif filename == "../data/auction_verification_dataset/data.csv":
+        assert (
+            dataset_type == "dropout"
+        ), "dataset_type argument must be 'dropout' when the filename points to the dropout dataset."
+
+    models = ["dt", "xgb", "svm", "knn"]
+
+    if dataset_type == "auction":
+        model_to_iter_map = {"dt": 2000, "xgb": 200, "svm": 20, "knn": 80}
+    else:
+        model_to_iter_map = {"dt": 2000, "xgb": 20, "svm": 4, "knn": 200}
+
+    for model in models:
+        get_best_model(
+            filename=filename,
+            dataset_type=dataset_type,
+            model=model,
+            n_iter_search=model_to_iter_map[model],
+            save_path="../artifacts",
+        )
+
+
 if __name__ == "__main__":
     np.random.seed(1234)
 
-    get_auction_verification_model_metrics()
-    get_student_dropout_model_metrics()
+    # get_auction_verification_model_metrics()
+    # get_student_dropout_model_metrics()
 
     # get_auction_percentage_curves()
     # get_dropout_percentage_curves()
 
     # get_neural_network_percentage_curves()
 
-    ## TODO: Rerun 2 model_metrics() functions, get best models, save them as artifacts,
-    ## and use this to get hyperparameter information and feature importances (i.e. SHAP)
+    # get_all_best_models(
+    #     filename="../data/auction_verification_dataset/data.csv", dataset_type="auction"
+    # )
+    get_all_best_models(
+        filename="../data/student_dropout_dataset/data.csv", dataset_type="dropout"
+    )
+
+    ## TODO: Get hyperparameter information and feature importances (i.e. SHAP)
+    ## Consider getting decision boundary illustrations for each model; this may involve PCA
     ## %
     ##
     ##
