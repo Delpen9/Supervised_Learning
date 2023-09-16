@@ -14,13 +14,14 @@ from helper_functions.model_training_evaluation_helper_functions import (
 from helper_functions.feature_importance_decision_boundaries_helper_functions import (
     load_models,
     get_all_models_SHAP,
+    get_all_models_decision_boundaries
 )
 
 if __name__ == "__main__":
     np.random.seed(1234)
 
     # run_cases = np.arange(1, 10).astype(int) # Run all cases
-    run_cases = [5]
+    run_cases = [6]
 
     if 1 in run_cases:
         get_auction_verification_model_metrics()
@@ -50,6 +51,12 @@ if __name__ == "__main__":
         get_all_models_SHAP(
             filename="../data/student_dropout_dataset/data.csv",
             dataset_type="dropout",
+        )
+
+    if 6 in run_cases:
+        get_all_models_decision_boundaries(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
         )
 
     ## TODO: Get best neural network and get SHAP for it.

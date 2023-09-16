@@ -35,6 +35,8 @@ import joblib
 
 # Feature Explanations
 import shap
+from sklearn.decomposition import PCA
+from sklearn.svm import SVC
 
 # Helper Functions
 from helper_functions.model_training_evaluation_helper_functions import (
@@ -186,6 +188,102 @@ def get_all_models_SHAP(
 
     for model_object, model in zip(model_object_list, model_list):
         get_model_SHAP(
+            filename=filename,
+            dataset_type=dataset_type,
+            model=model,
+            model_object=model_object,
+        )
+
+def get_all_models_SHAP(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+) -> None:
+    filename_dataset_assertions(filename, dataset_type)
+
+    best_model_dt, best_model_xgb, best_model_svm, best_model_knn = load_models(
+        filename=filename,
+        dataset_type=dataset_type,
+    )
+
+    model_object_list = [best_model_dt, best_model_xgb, best_model_svm[0], best_model_knn]
+    model_list = ["dt", "xgb", "svm", "knn"]
+
+    for model_object, model in zip(model_object_list, model_list):
+        get_model_SHAP(
+            filename=filename,
+            dataset_type=dataset_type,
+            model=model,
+            model_object=model_object,
+        )
+
+def get_model_decision_boundary(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+    model=None,
+    model_object=None,
+) -> None:
+    assert model in [
+        "dt",
+        "xgb",
+        "svm",
+        "knn",
+    ], "Model argument must be in ['dt', 'xgb', 'svm', 'knn']."
+
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
+    )
+
+    # Reduce the data to two dimensions using PCA
+    pca = PCA(n_components=2)
+    X_reduced = pca.fit_transform(X_train)
+
+    # Create a mesh grid in the reduced 2D space
+    x_min, x_max = X_reduced[:, 0].min() - 1, X_reduced[:, 0].max() + 1
+    y_min, y_max = X_reduced[:, 1].min() - 1, X_reduced[:, 1].max() + 1
+    xx, yy = np.meshgrid(
+        np.arange(x_min, x_max, 0.02),
+        np.arange(y_min, y_max, 0.02)
+    )
+
+    # Transform the mesh grid back to the original 10D space
+    Z = np.c_[xx.ravel(), yy.ravel()]
+    Z = pca.inverse_transform(Z)
+
+    # Use the trained model to predict the labels for each point in the 10D mesh grid
+    Z_pred = model_object.predict(Z)
+    Z_pred = Z_pred.reshape(xx.shape)
+
+    model_map_dict = {
+        "dt": "Decision Tree",
+        "xgb": "XGBoost",
+        "svm": "Support Vector Machine",
+        "knn": "K-Nearest Neighbors",
+    }
+
+    plt.contourf(xx, yy, Z_pred, alpha=0.8)
+    plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=y_train, edgecolors='k', marker='o', linewidth=1)
+    plt.xlabel('Principal Component 1')
+    plt.ylabel('Principal Component 2')
+    plt.title(f'{model_map_dict[model]}: Decision Boundary')
+    plt.savefig(f"../outputs/Decision_Boundary/{model}_Decision_Boundary_{dataset_type}.png")
+    plt.clf()
+    
+def get_all_models_decision_boundaries(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+) -> None:
+    filename_dataset_assertions(filename, dataset_type)
+
+    best_model_dt, best_model_xgb, best_model_svm, best_model_knn = load_models(
+        filename=filename,
+        dataset_type=dataset_type,
+    )
+
+    model_object_list = [best_model_dt, best_model_xgb, best_model_svm[0], best_model_knn]
+    model_list = ["dt", "xgb", "svm", "knn"]
+
+    for model_object, model in zip(model_object_list, model_list):
+        get_model_decision_boundary(
             filename=filename,
             dataset_type=dataset_type,
             model=model,
