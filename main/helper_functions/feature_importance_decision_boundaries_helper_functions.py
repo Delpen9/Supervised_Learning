@@ -240,10 +240,22 @@ def get_model_decision_boundary(
     # Create a mesh grid in the reduced 2D space
     x_min, x_max = X_reduced[:, 0].min() - 1, X_reduced[:, 0].max() + 1
     y_min, y_max = X_reduced[:, 1].min() - 1, X_reduced[:, 1].max() + 1
-    xx, yy = np.meshgrid(
-        np.arange(x_min, x_max, 0.02),
-        np.arange(y_min, y_max, 0.02)
-    )
+    if dataset_type == "auction":
+        xx, yy = np.meshgrid(
+            np.arange(x_min, x_max, 0.02),
+            np.arange(y_min, y_max, 0.02)
+        )
+    else:
+        if model not in "knn":
+            xx, yy = np.meshgrid(
+                np.arange(x_min, x_max, 0.5),
+                np.arange(y_min, y_max, 0.5)
+            )
+        else:
+            xx, yy = np.meshgrid(
+                np.arange(x_min, x_max, 5.0),
+                np.arange(y_min, y_max, 5.0)
+            ) 
 
     # Transform the mesh grid back to the original 10D space
     Z = np.c_[xx.ravel(), yy.ravel()]

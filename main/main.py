@@ -10,6 +10,7 @@ from helper_functions.model_training_evaluation_helper_functions import (
     get_dropout_percentage_curves,
     get_neural_network_percentage_curves,
     get_all_best_models,
+    get_best_neural_network,
 )
 from helper_functions.feature_importance_decision_boundaries_helper_functions import (
     load_models,
@@ -21,7 +22,7 @@ if __name__ == "__main__":
     np.random.seed(1234)
 
     # run_cases = np.arange(1, 10).astype(int) # Run all cases
-    run_cases = [6]
+    run_cases = [4]
 
     if 1 in run_cases:
         get_auction_verification_model_metrics()
@@ -42,6 +43,13 @@ if __name__ == "__main__":
         get_all_best_models(
             filename="../data/student_dropout_dataset/data.csv", dataset_type="dropout"
         )
+        get_best_neural_network(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        get_best_neural_network(
+            filename="../data/student_dropout_dataset/data.csv", dataset_type="dropout"
+        )
 
     if 5 in run_cases:
         get_all_models_SHAP(
@@ -58,9 +66,12 @@ if __name__ == "__main__":
             filename="../data/auction_verification_dataset/data.csv",
             dataset_type="auction",
         )
+        get_all_models_decision_boundaries(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
 
     ## TODO: Get best neural network and get SHAP for it.
-    ## TODO: Get decision boundary illustrations for each best model.
     ## TODO: Get individual model performance values by varying individual features
     ## i.e. ccp_alpha for decision tree
     ## i.e. learning_rate for neural_network
@@ -70,5 +81,5 @@ if __name__ == "__main__":
     ## TODO: Get graph that shows average performance over specific iteration counts. (10 vs. 100 vs. 500)
     ## %
     ##
-    ##
+    ## 
     ## %

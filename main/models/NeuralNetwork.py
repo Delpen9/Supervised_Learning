@@ -40,7 +40,7 @@ class MultiClassClassifier(nn.Module):
 
 def tune_neural_network(
     train_loader, val_loader, input_size, num_epochs=10, learning_rate=0.001, multiclass=False, num_classes=2
-):
+) -> tuple[any, list, list]:
     if multiclass == False:
         model = BinaryClassifier(input_size)
     else:
@@ -52,7 +52,12 @@ def tune_neural_network(
         criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
+    validation_loss_history = []
+    training_loss_history = []
     for epoch in range(num_epochs):
+        validation_loss_epoch = []
+        training_loss_epoch = []
+
         # Training loop
         for inputs, labels in train_loader:
             outputs = model(inputs)
@@ -60,6 +65,8 @@ def tune_neural_network(
                 loss = criterion(outputs, labels.unsqueeze(1))
             else:
                 loss = criterion(outputs, labels.to(torch.long))
+
+            training_loss_epoch.append(loss.item())
 
             optimizer.zero_grad()
             loss.backward()
@@ -74,14 +81,18 @@ def tune_neural_network(
                     loss = criterion(outputs, labels.unsqueeze(1))
                 else:
                     loss = criterion(outputs, labels.to(torch.long))
-                    
+
+                validation_loss_epoch.append(loss.item())
                 val_loss += loss.item()
 
+        validation_loss_history.append(np.mean(np.array(validation_loss_epoch)))
+        training_loss_history.append(np.mean(np.array(training_loss_epoch)))
+
         print(
-            f"Epoch {epoch+1}/{num_epochs} - Loss: {loss.item():.4f}, Val Loss: {val_loss/len(val_loader):.4f}"
+            f"Epoch {epoch+1}/{num_epochs} - Training Loss: {loss.item():.4f}, Val Loss: {val_loss / len(val_loader):.4f}"
         )
 
-    return model
+    return (model, training_loss_history, validation_loss_history)
 
 
 def evaluate_model(model, test_loader, num_classes=2):

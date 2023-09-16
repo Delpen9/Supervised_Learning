@@ -140,6 +140,81 @@ def knn_metrics(
     return test_accuracy, test_auc, train_accuracy, train_auc
 
 
+def graphing_neural_network_training_loss(
+    epochs, training_loss, validation_loss, dataset_type="Auction"
+) -> None:
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(
+        epochs,
+        training_loss,
+        label="Training Loss",
+        marker="o",
+        markersize=5,
+        linestyle="-",
+        color="blue",
+    )
+    plt.plot(
+        epochs,
+        validation_loss,
+        label="Validation Loss",
+        marker="o",
+        markersize=5,
+        linestyle="-",
+        color="red",
+    )
+
+    plt.title(
+        f"Neural Network: Training and Validation Loss per Epoch \n {dataset_type.capitalize()} Dataset",
+        fontsize=14,
+        fontweight="bold",
+    )
+    plt.xlabel("Epochs", fontsize=12)
+    plt.ylabel("Loss", fontsize=12)
+
+    if dataset_type=="dropout":
+        plt.ylim([0.0, 5.0])
+
+    plt.grid(True)
+    plt.legend()
+
+    plt.savefig(
+        f"../outputs/Neural_Network/{dataset_type}_neural_network_training_validation_loss_curve.png"
+    )
+    plt.clf()
+
+
+def get_best_neural_network_model(
+    train_loader,
+    val_loader,
+    test_loader,
+    input_size,
+    num_epochs,
+    learning_rate,
+    multiclass,
+    num_classes,
+    dataset_type,
+    save_path="../artifacts",
+) -> None:
+    best_model, training_loss_history, validation_loss_history = tune_neural_network(
+        train_loader,
+        val_loader,
+        input_size,
+        num_epochs,
+        learning_rate,
+        multiclass,
+        num_classes,
+    )
+
+    epochs = list(range(1, len(training_loss_history) + 1))
+    graphing_neural_network_training_loss(
+        epochs, training_loss_history, validation_loss_history, dataset_type
+    )
+
+    save_path += f"/best_model_{dataset_type}_nn.pkl"
+    joblib.dump(best_model, save_path)
+
+
 def neural_network_metrics(
     train_loader,
     val_loader,
@@ -150,7 +225,7 @@ def neural_network_metrics(
     multiclass,
     num_classes,
 ) -> tuple[float, float, float, float]:
-    best_model = tune_neural_network(
+    best_model, training_loss_history, validation_loss_history = tune_neural_network(
         train_loader,
         val_loader,
         input_size,
@@ -952,6 +1027,93 @@ def get_neural_network_percentage_curves() -> None:
         epochs=500,
         learning_rate=0.001,
         y_bounds=[0.35, 1.0],
+    )
+
+
+def get_best_neural_network(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+    epochs=500,
+    learning_rate=0.001,
+) -> None:
+    filename_dataset_assertions(filename, dataset_type)
+
+    multiclass = True if dataset_type == "dropout" else False
+
+    if dataset_type == "auction":
+        data = pd.read_csv(filename)
+    elif dataset_type == "dropout":
+        data = pd.read_csv(filename, delimiter=";")
+
+        data["Target"] = data["Target"].replace(
+            {"Graduate": 0, "Dropout": 1, "Enrolled": 2}
+        )
+
+    train_val_df, test_df = train_test_split(data, test_size=0.2, random_state=42)
+    train_df, val_df = train_test_split(train_val_df, test_size=0.125, random_state=42)
+
+    if dataset_type == "auction":
+        X_train = train_df.iloc[:, :-2].copy()
+        y_train = train_df.iloc[:, -2].copy().astype(int)
+
+        X_val = val_df.iloc[:, :-2].copy()
+        y_val = val_df.iloc[:, -2].copy().astype(int)
+
+        X_test = test_df.iloc[:, :-2].copy()
+        y_test = test_df.iloc[:, -2].copy().astype(int)
+    elif dataset_type == "dropout":
+        X_train = train_df.iloc[:, :-1].copy()
+        y_train = train_df.iloc[:, -1].copy().astype(int)
+
+        X_val = val_df.iloc[:, :-1].copy()
+        y_val = val_df.iloc[:, -1].copy().astype(int)
+
+        X_test = test_df.iloc[:, :-1].copy()
+        y_test = test_df.iloc[:, -1].copy().astype(int)
+
+    val_dataset = TensorDataset(
+        torch.tensor(X_val.values, dtype=torch.float32),
+        torch.tensor(y_val.values, dtype=torch.float32),
+    )
+    test_dataset = TensorDataset(
+        torch.tensor(X_test.values, dtype=torch.float32),
+        torch.tensor(y_test.values, dtype=torch.float32),
+    )
+    train_dataset = TensorDataset(
+        torch.tensor(X_train.values, dtype=torch.float32),
+        torch.tensor(y_train.values, dtype=torch.float32),
+    )
+    val_loader = DataLoader(val_dataset, batch_size=32)
+    test_loader = DataLoader(test_dataset, batch_size=32)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+
+    if dataset_type == "dropout":
+        input_size, num_epochs, learning_rate, multiclass, num_classes = (
+            X_train.shape[1],
+            epochs,
+            learning_rate,
+            True,
+            3,
+        )
+    elif dataset_type == "auction":
+        input_size, num_epochs, learning_rate, multiclass, num_classes = (
+            X_train.shape[1],
+            epochs,
+            learning_rate,
+            False,
+            2,
+        )
+
+    get_best_neural_network_model(
+        train_loader,
+        val_loader,
+        test_loader,
+        input_size,
+        num_epochs,
+        learning_rate,
+        multiclass,
+        num_classes,
+        dataset_type,
     )
 
 
