@@ -22,7 +22,7 @@ if __name__ == "__main__":
     np.random.seed(1234)
 
     # run_cases = np.arange(1, 10).astype(int) # Run all cases
-    run_cases = [4]
+    run_cases = [1, 2, 3, 4, 5, 6]
 
     if 1 in run_cases:
         get_auction_verification_model_metrics()
@@ -77,8 +77,7 @@ if __name__ == "__main__":
     ## i.e. learning_rate for neural_network
     ## TODO: Get univariate and multivariate descriptive statistics of the datasets against each other and their targets.
     ## TODO: Current KNN plots show results without pre-processing; do pre-processing and compare new performance.
-    ## !!!!REQUIRED TODO: Show training/validation curve for neural network to show when it begins to overfit.
-    ## TODO: Get graph that shows average performance over specific iteration counts. (10 vs. 100 vs. 500)
+    ## TODO: Get graph that shows average performance over specific iteration counts for grid search. (10 vs. 100 vs. 500)
     ## %
     ##
     ## 
