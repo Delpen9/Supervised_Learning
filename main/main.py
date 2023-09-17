@@ -19,12 +19,19 @@ from helper_functions.feature_importance_decision_boundaries_helper_functions im
     get_all_models_decision_boundaries,
     get_neural_network_decision_boundary,
 )
+from helper_functions.model_hyperparameter_testing_helper_functions import (
+    compare_svm_kernels,
+    ccp_decision_tree_performance_graph,
+    max_depth_decision_tree_performance_graph,
+    min_samples_per_leaf_decision_tree_performance_graph,
+    min_impurity_decrease_decision_tree_performance_graph,
+)
 
 if __name__ == "__main__":
     np.random.seed(1234)
 
     # run_cases = np.arange(1, 10).astype(int) # Run all cases
-    run_cases = [6]
+    run_cases = [8]
 
     if 1 in run_cases:
         get_auction_verification_model_metrics()
@@ -89,13 +96,58 @@ if __name__ == "__main__":
             dataset_type="dropout",
         )
     
-    ## TODO: Get individual model performance values by varying individual features
-    ## i.e. ccp_alpha for decision tree
-    ## i.e. learning_rate for neural_network
+    if 7 in run_cases:
+        compare_svm_kernels(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        compare_svm_kernels(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
+    
+    if 8 in run_cases:
+        ccp_decision_tree_performance_graph(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        ccp_decision_tree_performance_graph(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
+
+        max_depth_decision_tree_performance_graph(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        max_depth_decision_tree_performance_graph(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
+
+        min_samples_per_leaf_decision_tree_performance_graph(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        min_samples_per_leaf_decision_tree_performance_graph(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
+
+        min_impurity_decrease_decision_tree_performance_graph(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        min_impurity_decrease_decision_tree_performance_graph(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
+
+    if 9 in run_cases:
+        ## !Important TODO: Vary values of k for kNN
+        return None
+
+    ## !Important TODO: Neural network performance by layer count and learning rate
     ## TODO: Get univariate and multivariate descriptive statistics of the datasets against each other and their targets.
     ## TODO: Current KNN plots show results without pre-processing; do pre-processing and compare new performance.
     ## TODO: Get graph that shows average performance over specific iteration counts for grid search. (10 vs. 100 vs. 500)
-    ## %
-    ## 
-    ## 
-    ## %
