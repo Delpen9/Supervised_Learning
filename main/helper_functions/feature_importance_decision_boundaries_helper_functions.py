@@ -349,8 +349,8 @@ def get_neural_network_decision_boundary(
         )
     else:
         xx, yy = np.meshgrid(
-            np.arange(x_min, x_max, 5.0),
-            np.arange(y_min, y_max, 5.0)
+            np.arange(x_min, x_max, 0.5),
+            np.arange(y_min, y_max, 0.5)
         )
 
     # Transform the mesh grid back to the original 10D space
@@ -359,15 +359,23 @@ def get_neural_network_decision_boundary(
 
     # Load in model
     best_model_nn = joblib.load(f"../artifacts/best_model_{dataset_type}_nn.pkl")
+    best_model_nn.eval()
 
     # Use the trained model to predict the labels for each point in the 10D mesh grid
-    Z_pred = model_object.predict(Z)
-    Z_pred = Z_pred.reshape(xx.shape)
+    Z_tensor = torch.tensor(Z, dtype=torch.float32)
+    with torch.no_grad():
+        Z_pred = best_model_nn(Z_tensor)
+    
+    # Handle multi-class
+    if dataset_type=="dropout":
+        Z_pred = torch.argmax(Z_pred, dim=1)
+
+    Z_pred = Z_pred.numpy().reshape(xx.shape)
 
     plt.contourf(xx, yy, Z_pred, alpha=0.8)
     plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=y_train, edgecolors='k', marker='o', linewidth=1)
     plt.xlabel('Principal Component 1')
     plt.ylabel('Principal Component 2')
-    plt.title(f'Neural Newtwork: Decision Boundary')
+    plt.title(f'Neural Network: Decision Boundary')
     plt.savefig(f"../outputs/Decision_Boundary/nn_Decision_Boundary_{dataset_type}.png")
     plt.clf()

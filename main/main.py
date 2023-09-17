@@ -72,14 +72,14 @@ if __name__ == "__main__":
         )
 
     if 6 in run_cases:
-        # get_all_models_decision_boundaries(
-        #     filename="../data/auction_verification_dataset/data.csv",
-        #     dataset_type="auction",
-        # )
-        # get_all_models_decision_boundaries(
-        #     filename="../data/student_dropout_dataset/data.csv",
-        #     dataset_type="dropout",
-        # )
+        get_all_models_decision_boundaries(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        get_all_models_decision_boundaries(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
         get_neural_network_decision_boundary(
             filename="../data/auction_verification_dataset/data.csv",
             dataset_type="auction",
