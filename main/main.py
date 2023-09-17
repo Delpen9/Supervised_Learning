@@ -89,7 +89,6 @@ if __name__ == "__main__":
             dataset_type="dropout",
         )
     
-    ## TODO: Get neural network decision boundary
     ## TODO: Get individual model performance values by varying individual features
     ## i.e. ccp_alpha for decision tree
     ## i.e. learning_rate for neural_network

@@ -443,7 +443,7 @@ def get_auction_verification_model_metrics(
     plt.text(0, 1, table, size=12, family="monospace")
 
     plt.tight_layout()
-    plt.savefig("../outputs/auction_verification_model_accuracy_auc.png", dpi=300)
+    plt.savefig("../outputs/Performance_Tables/auction_verification_model_accuracy_auc.png", dpi=300)
 
 
 def get_student_dropout_model_metrics(
@@ -775,7 +775,7 @@ def get_performance_curve(
 
     # Save the plot
     plt.savefig(
-        rf"../outputs/{model}_test_acc_auc_performance_curve_{dataset_type}_dataset.png",
+        rf"../outputs/Percentage_Performance_Curves/{model}_test_acc_auc_performance_curve_{dataset_type}_dataset.png",
         dpi=300,
     )
 
