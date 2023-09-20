@@ -27,13 +27,19 @@ from helper_functions.model_hyperparameter_testing_helper_functions import (
     min_impurity_decrease_decision_tree_performance_graph,
     get_performance_by_value_of_k_knn,
     get_neural_network_performance_by_learning_rate,
+    get_performance_by_value_of_c_svm,
+    get_performance_by_value_of_learning_rate_xgboost,
+    get_performance_by_value_of_max_depth_xgboost,
+)
+from helper_functions.univariate_multivariate_eda_helper_functions import (
+    get_correlation_heatmap,
 )
 
 if __name__ == "__main__":
     np.random.seed(1234)
 
     # run_cases = np.arange(1, 13).astype(int) # Run all cases
-    run_cases = [10]
+    run_cases = [13]
 
     if 1 in run_cases:
         get_auction_verification_model_metrics()
@@ -166,10 +172,35 @@ if __name__ == "__main__":
         )
 
     if 11 in run_cases:
-        ## TODO: Vary 'C' for support vector machine
-
+        get_performance_by_value_of_c_svm(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        get_performance_by_value_of_c_svm(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
+    
     if 12 in run_cases:
-        ## TODO: Vary "learning rate" and "max depth" for xgboost
+        get_performance_by_value_of_learning_rate_xgboost(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        get_performance_by_value_of_learning_rate_xgboost(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
+        get_performance_by_value_of_max_depth_xgboost(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        get_performance_by_value_of_max_depth_xgboost(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
     
     if 13 in run_cases:
-        ## TODO: Get univariate and multivariate summary statistics/graphs for the data
+        get_correlation_heatmap(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )

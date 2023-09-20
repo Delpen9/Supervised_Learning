@@ -3,9 +3,10 @@ import numpy as np
 import pandas as pd
 
 # Model Training
-from sklearn.svm import SVC
+from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
+import xgboost as xgb
 
 # Modeling Libraries
 from sklearn.calibration import CalibratedClassifierCV
@@ -546,4 +547,205 @@ def get_neural_network_performance_by_learning_rate(
 
     plt.savefig(
         f"../outputs/Hyperparameter_Testing/Learning_Rate_Performance_{dataset_type}_nn.png"
+    )
+
+def get_performance_by_value_of_c_svm(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+) -> None:
+    np.random.seed(1234)
+
+    filename_dataset_assertions(filename, dataset_type)
+
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
+    )
+
+    c_values = np.logspace(-4, 4, 20)
+
+    train_accuracies = []
+    test_accuracies = []
+    train_aucs = []
+    test_aucs = []
+    for c in c_values:
+        model = LinearSVC(C=c)
+        model_prob_ = CalibratedClassifierCV(
+            model, method="sigmoid", cv="prefit"
+        )
+
+        model.fit(X_train, y_train)
+        model_prob_.fit(X_train, y_train)
+
+        if dataset_type=="auction":
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_test)
+
+            y_train_prob = model_prob_.predict_proba(X_train)[:, 1]
+            y_test_prob = model_prob_.predict_proba(X_test)[:, 1]
+        else:
+            y_train_pred = model.predict(np.array(X_train))
+            y_test_pred = model.predict(np.array(X_test))
+
+            y_train_prob = model_prob_.predict_proba(np.array(X_train))
+            y_test_prob = model_prob_.predict_proba(np.array(X_test))
+
+        train_accuracies.append(accuracy_score(y_train, y_train_pred))
+        test_accuracies.append(accuracy_score(y_test, y_test_pred))
+
+        train_aucs.append(roc_auc_score(y_train, y_train_prob, multi_class="ovr", average="macro"))
+        test_aucs.append(roc_auc_score(y_test, y_test_prob, multi_class="ovr", average="macro"))
+
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(c_values, train_accuracies, marker="o", label="Train Accuracy")
+    plt.plot(c_values, test_accuracies, marker="o", label="Test Accuracy")
+    plt.plot(c_values, train_aucs, marker="o", label="Train AUC")
+    plt.plot(c_values, test_aucs, marker="o", label="Test AUC")
+
+    plt.xticks(range(int(min(c_values)), int(max(c_values)) + 1))
+    plt.xscale("log")
+
+    plt.xlabel("C")
+    plt.ylabel("Performance")
+    plt.title("SVM \n Performance as a function of C")
+
+    plt.legend()
+    plt.grid(True)
+
+    plt.savefig(
+        f"../outputs/Hyperparameter_Testing/C_Performance_{dataset_type}_svm.png"
+    )
+
+def get_performance_by_value_of_learning_rate_xgboost(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+) -> None:
+    np.random.seed(1234)
+
+    filename_dataset_assertions(filename, dataset_type)
+
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
+    )
+
+    learning_rates = np.linspace(0.01, 1, 100)
+
+    train_accuracies = []
+    test_accuracies = []
+    train_aucs = []
+    test_aucs = []
+    for learning_rate in learning_rates:
+        model = xgb.XGBClassifier(
+            objective="binary:logistic", use_label_encoder=False, eval_metric="logloss",
+            learning_rate=learning_rate
+        )
+
+        model.fit(X_train, y_train)
+
+        if dataset_type=="auction":
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_test)
+
+            y_train_prob = model.predict_proba(X_train)[:, 1]
+            y_test_prob = model.predict_proba(X_test)[:, 1]
+        else:
+            y_train_pred = model.predict(np.array(X_train))
+            y_test_pred = model.predict(np.array(X_test))
+
+            y_train_prob = model.predict_proba(np.array(X_train))
+            y_test_prob = model.predict_proba(np.array(X_test))
+
+        train_accuracies.append(accuracy_score(y_train, y_train_pred))
+        test_accuracies.append(accuracy_score(y_test, y_test_pred))
+
+        train_aucs.append(roc_auc_score(y_train, y_train_prob, multi_class="ovr", average="macro"))
+        test_aucs.append(roc_auc_score(y_test, y_test_prob, multi_class="ovr", average="macro"))
+
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(learning_rates, train_accuracies, marker="o", label="Train Accuracy")
+    plt.plot(learning_rates, test_accuracies, marker="o", label="Test Accuracy")
+    plt.plot(learning_rates, train_aucs, marker="o", label="Train AUC")
+    plt.plot(learning_rates, test_aucs, marker="o", label="Test AUC")
+
+    plt.xticks(range(int(min(learning_rates)), int(max(learning_rates)) + 1))
+    if dataset_type=="auction":
+        plt.ylim([0.98, 1.0])
+
+    plt.xlabel("Learning Rate")
+    plt.ylabel("Performance")
+    plt.title("XGBoost \n Performance as a Function of Learning Rate")
+
+    plt.legend()
+    plt.grid(True)
+
+    plt.savefig(
+        f"../outputs/Hyperparameter_Testing/Learning_Rate_Performance_{dataset_type}_xgb.png"
+    )
+
+def get_performance_by_value_of_max_depth_xgboost(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+) -> None:
+    np.random.seed(1234)
+
+    filename_dataset_assertions(filename, dataset_type)
+
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
+    )
+
+    max_depths = np.arange(1, 11).astype(int)
+
+    train_accuracies = []
+    test_accuracies = []
+    train_aucs = []
+    test_aucs = []
+    for max_depth in max_depths:
+        model = xgb.XGBClassifier(
+            objective="binary:logistic", use_label_encoder=False, eval_metric="logloss",
+            max_depth=max_depth
+        )
+
+        model.fit(X_train, y_train)
+
+        if dataset_type=="auction":
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_test)
+
+            y_train_prob = model.predict_proba(X_train)[:, 1]
+            y_test_prob = model.predict_proba(X_test)[:, 1]
+        else:
+            y_train_pred = model.predict(np.array(X_train))
+            y_test_pred = model.predict(np.array(X_test))
+
+            y_train_prob = model.predict_proba(np.array(X_train))
+            y_test_prob = model.predict_proba(np.array(X_test))
+
+        train_accuracies.append(accuracy_score(y_train, y_train_pred))
+        test_accuracies.append(accuracy_score(y_test, y_test_pred))
+
+        train_aucs.append(roc_auc_score(y_train, y_train_prob, multi_class="ovr", average="macro"))
+        test_aucs.append(roc_auc_score(y_test, y_test_prob, multi_class="ovr", average="macro"))
+
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(max_depths, train_accuracies, marker="o", label="Train Accuracy")
+    plt.plot(max_depths, test_accuracies, marker="o", label="Test Accuracy")
+    plt.plot(max_depths, train_aucs, marker="o", label="Train AUC")
+    plt.plot(max_depths, test_aucs, marker="o", label="Test AUC")
+
+    plt.xticks(range(int(min(max_depths)), int(max(max_depths)) + 1))
+    if dataset_type=="auction":
+        plt.ylim([0.9, 1.0])
+
+    plt.xlabel("Max Depth")
+    plt.ylabel("Performance")
+    plt.title("XGBoost \n Performance as a Function of Max Depth")
+
+    plt.legend()
+    plt.grid(True)
+
+    plt.savefig(
+        f"../outputs/Hyperparameter_Testing/Max_Depth_Performance_{dataset_type}_xgb.png"
     )
