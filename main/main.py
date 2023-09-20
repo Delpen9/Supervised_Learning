@@ -32,7 +32,7 @@ from helper_functions.model_hyperparameter_testing_helper_functions import (
 if __name__ == "__main__":
     np.random.seed(1234)
 
-    # run_cases = np.arange(1, 10).astype(int) # Run all cases
+    # run_cases = np.arange(1, 13).astype(int) # Run all cases
     run_cases = [10]
 
     if 1 in run_cases:
@@ -166,8 +166,10 @@ if __name__ == "__main__":
         )
 
     if 11 in run_cases:
-        ## TODO: Get univariate and multivariate summary statistics/graphs for the data
+        ## TODO: Vary 'C' for support vector machine
 
+    if 12 in run_cases:
+        ## TODO: Vary "learning rate" and "max depth"
     
-    ## TODO: Current KNN plots show results without pre-processing; do pre-processing and compare new performance.
-    ## TODO: Get graph that shows average performance over specific iteration counts for grid search. (10 vs. 100 vs. 500)
+    if 13 in run_cases:
+        ## TODO: Get univariate and multivariate summary statistics/graphs for the data
