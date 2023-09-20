@@ -151,7 +151,7 @@ if __name__ == "__main__":
     val_loader = DataLoader(val_dataset, batch_size=32)
     test_loader = DataLoader(test_dataset, batch_size=32)
 
-    best_model = tune_neural_network(train_loader, val_loader, input_size, num_epochs)
+    best_model, _, _ = tune_neural_network(train_loader, val_loader, input_size, num_epochs)
 
     auc, accuracy = evaluate_model(best_model, test_loader)
     print(f"Test Accuracy: {accuracy:.4f}")

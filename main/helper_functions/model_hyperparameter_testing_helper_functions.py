@@ -5,6 +5,7 @@ import pandas as pd
 # Model Training
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 # Modeling Libraries
 from sklearn.calibration import CalibratedClassifierCV
@@ -34,6 +35,11 @@ import joblib
 # Helper Functions
 from helper_functions.model_training_evaluation_helper_functions import (
     get_all_best_models,
+)
+
+from models.NeuralNetwork import (
+    tune_neural_network,
+    evaluate_model,
 )
 
 
@@ -179,8 +185,6 @@ def ccp_decision_tree_performance_graph(
         filename, dataset_type
     )
 
-    best_model_dt = joblib.load(f"../artifacts/best_model_{dataset_type}_dt.pkl")
-
     if dataset_type=="auction":
         ccp_alphas = np.linspace(0, 0.05, 10)
     else:
@@ -240,8 +244,6 @@ def max_depth_decision_tree_performance_graph(
         filename, dataset_type
     )
 
-    best_model_dt = joblib.load(f"../artifacts/best_model_{dataset_type}_dt.pkl")
-
     max_depths = np.arange(1, 21)
 
     train_accuracies = []
@@ -297,8 +299,6 @@ def min_samples_per_leaf_decision_tree_performance_graph(
     (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
         filename, dataset_type
     )
-
-    best_model_dt = joblib.load(f"../artifacts/best_model_{dataset_type}_dt.pkl")
 
     min_samples = np.arange(1, 200, 5)
 
@@ -356,8 +356,6 @@ def min_impurity_decrease_decision_tree_performance_graph(
         filename, dataset_type
     )
 
-    best_model_dt = joblib.load(f"../artifacts/best_model_{dataset_type}_dt.pkl")
-
     min_impurity_decreases = np.arange(0.0, 0.005, 0.0001)
 
     train_accuracies = []
@@ -400,4 +398,152 @@ def min_impurity_decrease_decision_tree_performance_graph(
 
     plt.savefig(
         f"../outputs/Hyperparameter_Testing/Min_impurity_decrease_Performance_{dataset_type}_dt.png"
+    )
+
+
+def get_performance_by_value_of_k_knn(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+) -> None:
+    np.random.seed(1234)
+
+    filename_dataset_assertions(filename, dataset_type)
+
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
+    )
+
+    k_values = np.arange(1, 21).astype(int)
+
+    train_accuracies = []
+    test_accuracies = []
+    train_aucs = []
+    test_aucs = []
+    for k in k_values:
+        model = KNeighborsClassifier(n_neighbors=k)
+        model.fit(X_train, y_train)
+
+        if dataset_type=="auction":
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_test)
+
+            y_train_prob = model.predict_proba(X_train)[:, 1]
+            y_test_prob = model.predict_proba(X_test)[:, 1]
+        else:
+            y_train_pred = model.predict(np.array(X_train))
+            y_test_pred = model.predict(np.array(X_test))
+
+            y_train_prob = model.predict_proba(np.array(X_train))
+            y_test_prob = model.predict_proba(np.array(X_test))
+
+        train_accuracies.append(accuracy_score(y_train, y_train_pred))
+        test_accuracies.append(accuracy_score(y_test, y_test_pred))
+
+        train_aucs.append(roc_auc_score(y_train, y_train_prob, multi_class="ovr", average="macro"))
+        test_aucs.append(roc_auc_score(y_test, y_test_prob, multi_class="ovr", average="macro"))
+
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(k_values, train_accuracies, marker="o", label="Train Accuracy")
+    plt.plot(k_values, test_accuracies, marker="o", label="Test Accuracy")
+    plt.plot(k_values, train_aucs, marker="o", label="Train AUC")
+    plt.plot(k_values, test_aucs, marker="o", label="Test AUC")
+
+    plt.xticks(range(int(min(k_values)), int(max(k_values)) + 1))
+
+    plt.xlabel("K Neighbors")
+    plt.ylabel("Performance")
+    plt.title("kNN \n Performance as a function of K-Neighbors")
+
+    plt.legend()
+    plt.grid(True)
+
+    plt.savefig(
+        f"../outputs/Hyperparameter_Testing/k_Neighbors_Performance_{dataset_type}_knn.png"
+    )
+
+def get_neural_network_performance_by_learning_rate(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+) -> None:
+    np.random.seed(1234)
+
+    filename_dataset_assertions(filename, dataset_type)
+
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
+    )
+
+    learning_rates = np.logspace(2, -6, 9)
+
+    val_dataset = TensorDataset(
+        torch.tensor(X_val.values, dtype=torch.float32),
+        torch.tensor(y_val.values, dtype=torch.float32),
+    )
+    test_dataset = TensorDataset(
+        torch.tensor(X_test.values, dtype=torch.float32),
+        torch.tensor(y_test.values, dtype=torch.float32),
+    )
+    train_dataset = TensorDataset(
+        torch.tensor(X_train.values, dtype=torch.float32),
+        torch.tensor(y_train.values, dtype=torch.float32),
+    )
+    val_loader = DataLoader(val_dataset, batch_size=32)
+    test_loader = DataLoader(test_dataset, batch_size=32)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+
+    train_accuracies = []
+    test_accuracies = []
+    train_aucs = []
+    test_aucs = []
+    for learning_rate in learning_rates:
+        if dataset_type == "dropout":
+            input_size, num_epochs, multiclass, num_classes = (
+                X_train.shape[1],
+                100,
+                True,
+                3,
+            )
+        elif dataset_type == "auction":
+            input_size, num_epochs, multiclass, num_classes = (
+                X_train.shape[1],
+                100,
+                False,
+                2,
+            )
+
+        best_model, _, _ = tune_neural_network(
+            train_loader, val_loader,
+            input_size,
+            num_epochs, learning_rate,
+            multiclass, num_classes
+        )
+
+        train_auc, train_accuracy = evaluate_model(best_model, train_loader, num_classes=num_classes)
+        test_auc, test_accuracy = evaluate_model(best_model, test_loader, num_classes=num_classes)
+
+        train_accuracies.append(train_accuracy)
+        train_aucs.append(train_auc)
+        test_accuracies.append(test_accuracy)
+        test_aucs.append(test_auc)
+
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(learning_rates, train_accuracies, marker="o", label="Train Accuracy")
+    plt.plot(learning_rates, test_accuracies, marker="o", label="Test Accuracy")
+    plt.plot(learning_rates, train_aucs, marker="o", label="Train AUC")
+    plt.plot(learning_rates, test_aucs, marker="o", label="Test AUC")
+
+    plt.xticks(learning_rates)
+    plt.xscale("log")
+
+    plt.xlabel("Learning Rate")
+    plt.ylabel("Performance")
+    plt.title("Neural Network \n Performance as a function of Learning Rate (100 Epochs)")
+
+    plt.legend()
+    plt.grid(True)
+
+    plt.savefig(
+        f"../outputs/Hyperparameter_Testing/Learning_Rate_Performance_{dataset_type}_nn.png"
     )

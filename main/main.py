@@ -25,13 +25,15 @@ from helper_functions.model_hyperparameter_testing_helper_functions import (
     max_depth_decision_tree_performance_graph,
     min_samples_per_leaf_decision_tree_performance_graph,
     min_impurity_decrease_decision_tree_performance_graph,
+    get_performance_by_value_of_k_knn,
+    get_neural_network_performance_by_learning_rate,
 )
 
 if __name__ == "__main__":
     np.random.seed(1234)
 
     # run_cases = np.arange(1, 10).astype(int) # Run all cases
-    run_cases = [8]
+    run_cases = [10]
 
     if 1 in run_cases:
         get_auction_verification_model_metrics()
@@ -144,10 +146,28 @@ if __name__ == "__main__":
         )
 
     if 9 in run_cases:
-        ## !Important TODO: Vary values of k for kNN
-        return None
+        get_performance_by_value_of_k_knn(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        get_performance_by_value_of_k_knn(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
 
-    ## !Important TODO: Neural network performance by layer count and learning rate
-    ## TODO: Get univariate and multivariate descriptive statistics of the datasets against each other and their targets.
+    if 10 in run_cases:
+        get_neural_network_performance_by_learning_rate(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        get_neural_network_performance_by_learning_rate(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
+
+    if 11 in run_cases:
+        ## TODO: Get univariate and multivariate summary statistics/graphs for the data
+
+    
     ## TODO: Current KNN plots show results without pre-processing; do pre-processing and compare new performance.
     ## TODO: Get graph that shows average performance over specific iteration counts for grid search. (10 vs. 100 vs. 500)
