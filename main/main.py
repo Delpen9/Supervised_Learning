@@ -169,7 +169,7 @@ if __name__ == "__main__":
         ## TODO: Vary 'C' for support vector machine
 
     if 12 in run_cases:
-        ## TODO: Vary "learning rate" and "max depth"
+        ## TODO: Vary "learning rate" and "max depth" for xgboost
     
     if 13 in run_cases:
         ## TODO: Get univariate and multivariate summary statistics/graphs for the data
