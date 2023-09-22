@@ -843,7 +843,7 @@ def get_neural_network_performance_by_hidden_dimensions(
     headers = dimensions_combination_performance.columns.values.tolist()
     table = tabulate(dimensions_combination_performance, headers, tablefmt="grid", showindex=False)
 
-    fig, ax = plt.subplots(figsize=(15, 3))
+    fig, ax = plt.subplots(figsize=(15, 15))
     ax.axis("off")
     plt.text(0, 1, table, size=12, family="monospace")
 
