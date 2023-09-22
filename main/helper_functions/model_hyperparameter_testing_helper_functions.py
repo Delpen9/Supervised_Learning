@@ -751,6 +751,71 @@ def get_performance_by_value_of_max_depth_xgboost(
         f"../outputs/Hyperparameter_Testing/Max_Depth_Performance_{dataset_type}_xgb.png"
     )
 
+def get_performance_by_value_of_n_estimators_xgboost(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+) -> None:
+    np.random.seed(1234)
+
+    filename_dataset_assertions(filename, dataset_type)
+
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
+    )
+
+    n_estimator_values = np.arange(10, 1000, 5).astype(int)
+
+    train_accuracies = []
+    test_accuracies = []
+    train_aucs = []
+    test_aucs = []
+    for n_estimators in n_estimator_values:
+        model = xgb.XGBClassifier(
+            objective="binary:logistic", use_label_encoder=False, eval_metric="logloss",
+            n_estimators=n_estimators
+        )
+
+        model.fit(X_train, y_train)
+
+        if dataset_type=="auction":
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_test)
+
+            y_train_prob = model.predict_proba(X_train)[:, 1]
+            y_test_prob = model.predict_proba(X_test)[:, 1]
+        else:
+            y_train_pred = model.predict(np.array(X_train))
+            y_test_pred = model.predict(np.array(X_test))
+
+            y_train_prob = model.predict_proba(np.array(X_train))
+            y_test_prob = model.predict_proba(np.array(X_test))
+
+        train_accuracies.append(accuracy_score(y_train, y_train_pred))
+        test_accuracies.append(accuracy_score(y_test, y_test_pred))
+
+        train_aucs.append(roc_auc_score(y_train, y_train_prob, multi_class="ovr", average="macro"))
+        test_aucs.append(roc_auc_score(y_test, y_test_prob, multi_class="ovr", average="macro"))
+
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(n_estimator_values, train_accuracies, marker="o", label="Train Accuracy")
+    plt.plot(n_estimator_values, test_accuracies, marker="o", label="Test Accuracy")
+    plt.plot(n_estimator_values, train_aucs, marker="o", label="Train AUC")
+    plt.plot(n_estimator_values, test_aucs, marker="o", label="Test AUC")
+
+    plt.xlabel("N Estimators")
+    plt.xlim([0, 200])
+    plt.ylabel("Performance")
+    plt.yscale("log")
+    plt.title("XGBoost \n Performance as a Function of N Estimators")
+
+    plt.legend()
+    plt.grid(True)
+
+    plt.savefig(
+        f"../outputs/Hyperparameter_Testing/Num_Estimators_Performance_{dataset_type}_xgb.png"
+    )
+
 def get_neural_network_performance_by_hidden_dimensions(
     filename="../data/auction_verification_dataset/data.csv",
     dataset_type="auction",
@@ -839,4 +904,28 @@ def get_neural_network_performance_by_hidden_dimensions(
     dimensions_combination_performance["Test Accuracy"] = test_accuracies
     dimensions_combination_performance["Test AUC"] = test_aucs
 
-    dimensions_combination_performance.to_csv("../outputs/Hyperparameter_Testing/neural_network_dimension_combinations_performance.csv", index=False)
+    dimensions_combination_performance.to_csv(f"../outputs/Hyperparameter_Testing/neural_network_dimension_combinations_performance_{dataset_type}.csv", index=False)
+
+def get_neural_network_performance_heatmap(
+    dataset_type="auction",
+    set_version="test",
+    metric="AUC",
+) -> None:
+    assert dataset_type in ["auction", "dropout"], "dataset_type must be either 'auction' or 'dropout'"
+    assert set_version in ["test", "train"], "set_version must be in 'test' or 'train'"
+    assert metric in ["AUC", "Accuracy"], "metric must in 'AUC' or 'Accuracy'"
+
+    dimension_performance_df = pd.read_csv(f"../outputs/Hyperparameter_Testing/neural_network_dimension_combinations_performance_{dataset_type}.csv")
+
+    heatmap_data = dimension_performance_df.pivot(index='Dimension 2', columns='Dimension 1', values=f'Test {metric}')
+
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(heatmap_data, annot=True, cmap='viridis')
+
+    plt.xlabel("Width")
+    plt.ylabel("Height")
+    plt.title(f'{dataset_type.capitalize()}: Heatmap of Test {metric}')
+
+    plt.savefig(
+        f"../outputs/Hyperparameter_Testing/neural_network_dimension_heatmap_{dataset_type.capitalize()}_{set_version}_{metric}.png"
+    )
