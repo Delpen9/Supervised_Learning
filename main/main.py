@@ -30,6 +30,7 @@ from helper_functions.model_hyperparameter_testing_helper_functions import (
     get_performance_by_value_of_c_svm,
     get_performance_by_value_of_learning_rate_xgboost,
     get_performance_by_value_of_max_depth_xgboost,
+    get_neural_network_performance_by_hidden_dimensions,
 )
 from helper_functions.univariate_multivariate_eda_helper_functions import (
     get_correlation_heatmap,
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     np.random.seed(1234)
 
     # run_cases = np.arange(1, 13).astype(int) # Run all cases
-    run_cases = [1]
+    run_cases = [12]
 
     if 1 in run_cases:
         get_auction_verification_model_metrics()
@@ -183,19 +184,27 @@ if __name__ == "__main__":
         )
     
     if 12 in run_cases:
-        get_performance_by_value_of_learning_rate_xgboost(
+        # get_performance_by_value_of_learning_rate_xgboost(
+        #     filename="../data/auction_verification_dataset/data.csv",
+        #     dataset_type="auction",
+        # )
+        # get_performance_by_value_of_learning_rate_xgboost(
+        #     filename="../data/student_dropout_dataset/data.csv",
+        #     dataset_type="dropout",
+        # )
+        # get_performance_by_value_of_max_depth_xgboost(
+        #     filename="../data/auction_verification_dataset/data.csv",
+        #     dataset_type="auction",
+        # )
+        # get_performance_by_value_of_max_depth_xgboost(
+        #     filename="../data/student_dropout_dataset/data.csv",
+        #     dataset_type="dropout",
+        # )
+        get_neural_network_performance_by_hidden_dimensions(
             filename="../data/auction_verification_dataset/data.csv",
             dataset_type="auction",
         )
-        get_performance_by_value_of_learning_rate_xgboost(
-            filename="../data/student_dropout_dataset/data.csv",
-            dataset_type="dropout",
-        )
-        get_performance_by_value_of_max_depth_xgboost(
-            filename="../data/auction_verification_dataset/data.csv",
-            dataset_type="auction",
-        )
-        get_performance_by_value_of_max_depth_xgboost(
+        get_neural_network_performance_by_hidden_dimensions(
             filename="../data/student_dropout_dataset/data.csv",
             dataset_type="dropout",
         )

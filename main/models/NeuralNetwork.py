@@ -13,11 +13,11 @@ from sklearn.metrics import roc_auc_score, accuracy_score
 
 
 class BinaryClassifier(nn.Module):
-    def __init__(self, input_size):
+    def __init__(self, input_size, hidden_dimension_1=128, hidden_dimension_2=64):
         super(BinaryClassifier, self).__init__()
-        self.layer1 = nn.Linear(input_size, 128)
-        self.layer2 = nn.Linear(128, 64)
-        self.layer3 = nn.Linear(64, 1)
+        self.layer1 = nn.Linear(input_size, hidden_dimension_1)
+        self.layer2 = nn.Linear(hidden_dimension_1, hidden_dimension_2)
+        self.layer3 = nn.Linear(hidden_dimension_2, 1)
 
     def forward(self, x):
         x = torch.relu(self.layer1(x))
@@ -26,11 +26,11 @@ class BinaryClassifier(nn.Module):
         return x
 
 class MultiClassClassifier(nn.Module):
-    def __init__(self, input_size, num_classes):
+    def __init__(self, input_size, num_classes, hidden_dimension_1=128, hidden_dimension_2=64):
         super(MultiClassClassifier, self).__init__()
-        self.layer1 = nn.Linear(input_size, 128)
-        self.layer2 = nn.Linear(128, 64)
-        self.layer3 = nn.Linear(64, num_classes)
+        self.layer1 = nn.Linear(input_size, hidden_dimension_1)
+        self.layer2 = nn.Linear(hidden_dimension_1, hidden_dimension_2)
+        self.layer3 = nn.Linear(hidden_dimension_2, num_classes)
 
     def forward(self, x):
         x = torch.relu(self.layer1(x))
@@ -39,12 +39,13 @@ class MultiClassClassifier(nn.Module):
         return x
 
 def tune_neural_network(
-    train_loader, val_loader, input_size, num_epochs=10, learning_rate=0.001, multiclass=False, num_classes=2
+    train_loader, val_loader, input_size, num_epochs=10, learning_rate=0.001, multiclass=False, num_classes=2,
+    hidden_dimension_1=None, hidden_dimension_2=None
 ) -> tuple[any, list, list]:
     if multiclass == False:
-        model = BinaryClassifier(input_size)
+        model = BinaryClassifier(input_size, hidden_dimension_1, hidden_dimension_2)
     else:
-        model = MultiClassClassifier(input_size, num_classes)
+        model = MultiClassClassifier(input_size, num_classes, hidden_dimension_1, hidden_dimension_2)
 
     if multiclass == False:
         criterion = nn.BCELoss()

@@ -29,6 +29,7 @@ from tabulate import tabulate
 # Python Standard Libraries
 import time
 import math
+import itertools
 
 # Saving Models
 import joblib
@@ -749,3 +750,103 @@ def get_performance_by_value_of_max_depth_xgboost(
     plt.savefig(
         f"../outputs/Hyperparameter_Testing/Max_Depth_Performance_{dataset_type}_xgb.png"
     )
+
+def get_neural_network_performance_by_hidden_dimensions(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+) -> None:
+    np.random.seed(1234)
+
+    filename_dataset_assertions(filename, dataset_type)
+
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
+    )
+
+    dimensions = [4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    dimension_combinations = list(itertools.combinations(dimensions, 2))
+
+    val_dataset = TensorDataset(
+        torch.tensor(X_val.values, dtype=torch.float32),
+        torch.tensor(y_val.values, dtype=torch.float32),
+    )
+    test_dataset = TensorDataset(
+        torch.tensor(X_test.values, dtype=torch.float32),
+        torch.tensor(y_test.values, dtype=torch.float32),
+    )
+    train_dataset = TensorDataset(
+        torch.tensor(X_train.values, dtype=torch.float32),
+        torch.tensor(y_train.values, dtype=torch.float32),
+    )
+    val_loader = DataLoader(val_dataset, batch_size=32)
+    test_loader = DataLoader(test_dataset, batch_size=32)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+
+    train_accuracies = []
+    test_accuracies = []
+    train_aucs = []
+    test_aucs = []
+    for dimension_combination in dimension_combinations:
+        if dataset_type == "dropout":
+            input_size, num_epochs, learning_rate, multiclass, num_classes, hidden_dimension_1, hidden_dimension_2 = (
+                X_train.shape[1],
+                100,
+                10e-4,
+                True,
+                3,
+                dimension_combination[0],
+                dimension_combination[1],
+            )
+        elif dataset_type == "auction":
+            input_size, num_epochs, learning_rate, multiclass, num_classes, hidden_dimension_1, hidden_dimension_2 = (
+                X_train.shape[1],
+                100,
+                10e-2,
+                False,
+                2,
+                dimension_combination[0],
+                dimension_combination[1],
+            )
+
+        best_model, _, _ = tune_neural_network(
+            train_loader, val_loader,
+            input_size,
+            num_epochs, learning_rate,
+            multiclass, num_classes,
+            hidden_dimension_1, hidden_dimension_2
+        )
+
+        train_auc, train_accuracy = evaluate_model(best_model, train_loader, num_classes=num_classes)
+        test_auc, test_accuracy = evaluate_model(best_model, test_loader, num_classes=num_classes)
+
+        train_accuracies.append(train_accuracy)
+        train_aucs.append(train_auc)
+        test_accuracies.append(test_accuracy)
+        test_aucs.append(test_auc)
+
+    # plt.figure(figsize=(10, 6))
+    dimensions_combination_performance = pd.DataFrame([], columns=[
+        "Dimension 1",
+        "Dimension 2",
+        "Train Accuracy",
+        "Train AUC",
+        "Test Accuracy",
+        "Test AUC",
+    ])
+
+    dimensions_combination_performance[["Dimension 1", "Dimension 2"]] = dimension_combinations
+    dimensions_combination_performance["Train Accuracy"] = train_accuracies
+    dimensions_combination_performance["Train AUC"] = train_aucs
+    dimensions_combination_performance["Test Accuracy"] = test_accuracies
+    dimensions_combination_performance["Test AUC"] = test_aucs
+
+    headers = dimensions_combination_performance.columns.values.tolist()
+    table = tabulate(dimensions_combination_performance, headers, tablefmt="grid", showindex=False)
+
+    fig, ax = plt.subplots(figsize=(15, 3))
+    ax.axis("off")
+    plt.text(0, 1, table, size=12, family="monospace")
+
+    plt.tight_layout()
+    plt.savefig("../outputs/Hyperparameter_Testing/neural_network_dimension_combinations_performance.png", dpi=300)
+    dimensions_combination_performance.to_csv("../outputs/Hyperparameter_Testing/neural_network_dimension_combinations_performance.csv")
