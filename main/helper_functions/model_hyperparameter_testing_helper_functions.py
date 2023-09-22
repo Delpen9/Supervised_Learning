@@ -791,7 +791,7 @@ def get_neural_network_performance_by_hidden_dimensions(
             input_size, num_epochs, learning_rate, multiclass, num_classes, hidden_dimension_1, hidden_dimension_2 = (
                 X_train.shape[1],
                 100,
-                10e-4,
+                1e-4,
                 True,
                 3,
                 dimension_combination[0],
@@ -801,7 +801,7 @@ def get_neural_network_performance_by_hidden_dimensions(
             input_size, num_epochs, learning_rate, multiclass, num_classes, hidden_dimension_1, hidden_dimension_2 = (
                 X_train.shape[1],
                 100,
-                10e-2,
+                1e-3,
                 False,
                 2,
                 dimension_combination[0],
@@ -824,7 +824,6 @@ def get_neural_network_performance_by_hidden_dimensions(
         test_accuracies.append(test_accuracy)
         test_aucs.append(test_auc)
 
-    # plt.figure(figsize=(10, 6))
     dimensions_combination_performance = pd.DataFrame([], columns=[
         "Dimension 1",
         "Dimension 2",
@@ -840,13 +839,4 @@ def get_neural_network_performance_by_hidden_dimensions(
     dimensions_combination_performance["Test Accuracy"] = test_accuracies
     dimensions_combination_performance["Test AUC"] = test_aucs
 
-    headers = dimensions_combination_performance.columns.values.tolist()
-    table = tabulate(dimensions_combination_performance, headers, tablefmt="grid", showindex=False)
-
-    fig, ax = plt.subplots(figsize=(15, 15))
-    ax.axis("off")
-    plt.text(0, 1, table, size=12, family="monospace")
-
-    plt.tight_layout()
-    plt.savefig("../outputs/Hyperparameter_Testing/neural_network_dimension_combinations_performance.png", dpi=300)
-    dimensions_combination_performance.to_csv("../outputs/Hyperparameter_Testing/neural_network_dimension_combinations_performance.csv")
+    dimensions_combination_performance.to_csv("../outputs/Hyperparameter_Testing/neural_network_dimension_combinations_performance.csv", index=False)
