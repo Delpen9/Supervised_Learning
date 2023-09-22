@@ -204,3 +204,7 @@ if __name__ == "__main__":
             filename="../data/auction_verification_dataset/data.csv",
             dataset_type="auction",
         )
+        get_correlation_heatmap(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )

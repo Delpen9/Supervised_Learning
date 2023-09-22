@@ -93,6 +93,7 @@ def data_loading(
 
     return (X_train, y_train, X_val, y_val, X_test, y_test)
 
+
 def get_correlation_heatmap(
     filename="../data/auction_verification_dataset/data.csv",
     dataset_type="auction",
@@ -105,9 +106,50 @@ def get_correlation_heatmap(
         filename, dataset_type
     )
 
+    if dataset_type == "dropout":
+        rename_dict = {
+            "Curricular units 1st sem (approved)": "CU 1st SEM (appr)",
+            "Curricular units 1st sem (grade)": "CU 1st SEM (grade)",
+            "Curricular units 1st sem (evaluations)": "CU 1st SEM (eval)",
+            "Curricular units 2nd sem (approved)": "CU 2nd SEM (appr)",
+            "Curricular units 2nd sem (grade)": "CU 2nd SEM (grade)",
+            "Curricular units 2nd sem (evaluations)": "CU 2nd SEM (eval)",
+        }
+        X_train = X_train[
+            [
+                "Curricular units 1st sem (approved)",
+                "Curricular units 1st sem (grade)",
+                "Curricular units 1st sem (evaluations)",
+                "Curricular units 2nd sem (approved)",
+                "Curricular units 2nd sem (grade)",
+                "Curricular units 2nd sem (evaluations)",
+                "Course",
+                "Tuition fees up to date",
+                "Age at enrollment",
+            ]
+        ].rename(columns = rename_dict)
+        X_test = X_test[
+            [
+                "Curricular units 1st sem (approved)",
+                "Curricular units 1st sem (grade)",
+                "Curricular units 1st sem (evaluations)",
+                "Curricular units 2nd sem (approved)",
+                "Curricular units 2nd sem (grade)",
+                "Curricular units 2nd sem (evaluations)",
+                "Course",
+                "Tuition fees up to date",
+                "Age at enrollment",
+            ]
+        ].rename(columns = rename_dict)
+
     corr = X_train.corr()
 
+    plt.figure(figsize=(10, 8))
     sns.heatmap(corr, annot=True)
-    plt.savefig(
-        f"../outputs/EDA/correlation_heatmap_{dataset_type}.png"
-    )
+
+    # plt.xticks(rotation=45)
+    # plt.yticks(rotation=45)
+
+    plt.tight_layout()
+
+    plt.savefig(f"../outputs/EDA/correlation_heatmap_{dataset_type}.png")
