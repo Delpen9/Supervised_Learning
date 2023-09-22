@@ -40,7 +40,7 @@ if __name__ == "__main__":
     np.random.seed(1234)
 
     # run_cases = np.arange(1, 13).astype(int) # Run all cases
-    run_cases = [13]
+    run_cases = [1]
 
     if 1 in run_cases:
         get_auction_verification_model_metrics()
