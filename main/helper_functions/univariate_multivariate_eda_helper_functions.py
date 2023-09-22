@@ -29,6 +29,7 @@ from tabulate import tabulate
 # Python Standard Libraries
 import time
 import math
+import itertools
 
 # Saving Models
 import joblib
@@ -127,29 +128,73 @@ def get_correlation_heatmap(
                 "Tuition fees up to date",
                 "Age at enrollment",
             ]
-        ].rename(columns = rename_dict)
-        X_test = X_test[
-            [
-                "Curricular units 1st sem (approved)",
-                "Curricular units 1st sem (grade)",
-                "Curricular units 1st sem (evaluations)",
-                "Curricular units 2nd sem (approved)",
-                "Curricular units 2nd sem (grade)",
-                "Curricular units 2nd sem (evaluations)",
-                "Course",
-                "Tuition fees up to date",
-                "Age at enrollment",
-            ]
-        ].rename(columns = rename_dict)
+        ].rename(columns=rename_dict)
 
     corr = X_train.corr()
 
     plt.figure(figsize=(10, 8))
     sns.heatmap(corr, annot=True)
 
-    # plt.xticks(rotation=45)
-    # plt.yticks(rotation=45)
-
     plt.tight_layout()
 
     plt.savefig(f"../outputs/EDA/correlation_heatmap_{dataset_type}.png")
+
+
+def get_scatter_plots(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+) -> None:
+    np.random.seed(1234)
+
+    filename_dataset_assertions(filename, dataset_type)
+
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading(
+        filename, dataset_type
+    )
+
+    if dataset_type == "dropout":
+        rename_dict = {
+            "Curricular units 2nd sem (approved)": "CU 2nd SEM (appr)",
+            "Curricular units 2nd sem (grade)": "CU 2nd SEM (grade)",
+            "Curricular units 2nd sem (evaluations)": "CU 2nd SEM (eval)",
+        }
+        features_list = [
+            "CU 2nd SEM (appr)",
+            "CU 2nd SEM (grade)",
+            "CU 2nd SEM (eval)",
+        ]
+        X_train = X_train.rename(columns=rename_dict)
+        X_train = X_train[features_list]
+
+    else:
+        features_list = [
+            "property.price",
+            "process.b1.capacity",
+            "property.product",
+            "property.winner",
+        ]
+        X_train = X_train[features_list]
+
+    X_train["y"] = y_train
+
+    i = 0
+    feature_combinations = list(itertools.combinations(features_list, 2))
+
+    for feature_combination in feature_combinations:
+        sns.scatterplot(
+            data=X_train[list(feature_combination) + ["y"]],
+            x=feature_combination[0],
+            y=feature_combination[1],
+            hue="y",
+        )
+
+        plt.tight_layout()
+
+        plt.savefig(
+            f"../outputs/EDA/feature_combination_scatter_plot_{dataset_type}_{i}.png"
+        )
+        plt.cla()
+        plt.clf()
+        plt.close()
+
+        i += 1

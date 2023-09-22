@@ -33,6 +33,7 @@ from helper_functions.model_hyperparameter_testing_helper_functions import (
 )
 from helper_functions.univariate_multivariate_eda_helper_functions import (
     get_correlation_heatmap,
+    get_scatter_plots,
 )
 
 if __name__ == "__main__":
@@ -205,6 +206,14 @@ if __name__ == "__main__":
             dataset_type="auction",
         )
         get_correlation_heatmap(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
+        get_scatter_plots(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        get_scatter_plots(
             filename="../data/student_dropout_dataset/data.csv",
             dataset_type="dropout",
         )
