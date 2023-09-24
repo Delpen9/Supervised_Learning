@@ -202,11 +202,24 @@ def tune_knn_with_pre_processing(
 
     random_search.fit(X_train, y_train)
 
-    # Calculate accuracy
-    accuracy = random_search.best_estimator_.score(X_test, y_test)
-    print(f"Test Accuracy: {accuracy:.4f}")
+    test_accuracy = random_search.best_estimator_.score(X_test, y_test)
+    train_accuracy = random_search.best_estimator_.score(X_train, y_train)
 
-    # Calculate AUC
-    y_prob = random_search.best_estimator_.predict_proba(X_test)
-    auc = roc_auc_score(y_test, y_prob)
-    print(f"Test AUC: {auc:.4f}")
+    y_test_prob = random_search.best_estimator_.predict_proba(X_test)
+    test_auc = roc_auc_score(y_test, y_test_prob)
+
+    y_train_prob = random_search.best_estimator_.predict_proba(X_train)
+    train_auc = roc_auc_score(y_train, y_train_prob)
+
+    performance_values = [train_accuracy, test_accuracy, train_auc, test_auc]
+    performance_labels = ["Training Accuracy", "Test Accuracy", "Training AUC", "Test AUC"]
+
+    plt.figure(figsize=(10,6))
+    plt.bar(labels, float_values, color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'])  # Assigning different colors to each bar
+    plt.xlabel('Values')
+    plt.ylabel('Float Values')
+    plt.title('Bar Plot of Float Values')
+    plt.ylim(0, max(float_values) + 1)
+
+    for i in range(len(float_values)):
+        plt.text(i, float_values[i] + 0.1, f"{float_values[i]:.2f}", ha='center')
