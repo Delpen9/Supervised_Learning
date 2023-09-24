@@ -186,22 +186,22 @@ if __name__ == "__main__":
         )
     
     if 12 in run_cases:
-        # get_performance_by_value_of_learning_rate_xgboost(
-        #     filename="../data/auction_verification_dataset/data.csv",
-        #     dataset_type="auction",
-        # )
-        # get_performance_by_value_of_learning_rate_xgboost(
-        #     filename="../data/student_dropout_dataset/data.csv",
-        #     dataset_type="dropout",
-        # )
-        # get_performance_by_value_of_max_depth_xgboost(
-        #     filename="../data/auction_verification_dataset/data.csv",
-        #     dataset_type="auction",
-        # )
-        # get_performance_by_value_of_max_depth_xgboost(
-        #     filename="../data/student_dropout_dataset/data.csv",
-        #     dataset_type="dropout",
-        # )
+        get_performance_by_value_of_learning_rate_xgboost(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        get_performance_by_value_of_learning_rate_xgboost(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
+        get_performance_by_value_of_max_depth_xgboost(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        get_performance_by_value_of_max_depth_xgboost(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
         get_performance_by_value_of_n_estimators_xgboost(
             filename="../data/auction_verification_dataset/data.csv",
             dataset_type="auction",
@@ -210,34 +210,34 @@ if __name__ == "__main__":
             filename="../data/student_dropout_dataset/data.csv",
             dataset_type="dropout",
         )
-        # get_neural_network_performance_by_hidden_dimensions(
-        #     filename="../data/auction_verification_dataset/data.csv",
-        #     dataset_type="auction",
-        # )
-        # get_neural_network_performance_by_hidden_dimensions(
-        #     filename="../data/student_dropout_dataset/data.csv",
-        #     dataset_type="dropout",
-        # )
-        # get_neural_network_performance_heatmap(
-        #     dataset_type="auction",
-        #     set_version="test",
-        #     metric="AUC",
-        # )
-        # get_neural_network_performance_heatmap(
-        #     dataset_type="auction",
-        #     set_version="test",
-        #     metric="Accuracy",
-        # )
-        # get_neural_network_performance_heatmap(
-        #     dataset_type="dropout",
-        #     set_version="test",
-        #     metric="AUC",
-        # )
-        # get_neural_network_performance_heatmap(
-        #     dataset_type="dropout",
-        #     set_version="test",
-        #     metric="Accuracy",
-        # )
+        get_neural_network_performance_by_hidden_dimensions(
+            filename="../data/auction_verification_dataset/data.csv",
+            dataset_type="auction",
+        )
+        get_neural_network_performance_by_hidden_dimensions(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
+        get_neural_network_performance_heatmap(
+            dataset_type="auction",
+            set_version="test",
+            metric="AUC",
+        )
+        get_neural_network_performance_heatmap(
+            dataset_type="auction",
+            set_version="test",
+            metric="Accuracy",
+        )
+        get_neural_network_performance_heatmap(
+            dataset_type="dropout",
+            set_version="test",
+            metric="AUC",
+        )
+        get_neural_network_performance_heatmap(
+            dataset_type="dropout",
+            set_version="test",
+            metric="Accuracy",
+        )
     
     if 13 in run_cases:
         get_correlation_heatmap(
@@ -256,3 +256,6 @@ if __name__ == "__main__":
             filename="../data/student_dropout_dataset/data.csv",
             dataset_type="dropout",
         )
+
+    if 14 in run_cases:
+        
