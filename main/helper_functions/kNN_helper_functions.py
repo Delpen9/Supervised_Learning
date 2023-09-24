@@ -164,3 +164,49 @@ def get_pre_processed_performance_by_value_of_k_knn(
     plt.savefig(
         f"../outputs/kNN/pre_processed_k_Neighbors_Performance_{dataset_type}_knn.png"
     )
+
+def multi_class_roc_auc(y_true, y_prob, average="macro"):
+    return roc_auc_score(y_true, y_prob, multi_class="ovr", average=average)
+
+def tune_knn_with_pre_processing(
+    filename="../data/auction_verification_dataset/data.csv",
+    dataset_type="auction",
+    n_iter_search=5,
+    cv=5
+) -> None:
+    
+    filename_dataset_assertions(filename, dataset_type)
+
+    (X_train, y_train, X_val, y_val, X_test, y_test) = data_loading_knn(
+        filename, dataset_type
+    )
+
+    param_dist = {
+        "n_neighbors": np.arange(1, 51),
+        "weights": ["uniform", "distance"],
+        "algorithm": ["auto", "ball_tree", "kd_tree", "brute"],
+        "leaf_size": np.arange(1, 51),
+        "p": [1, 2],  # 1: Manhattan distance, 2: Euclidean distance
+    }
+
+    knn = KNeighborsClassifier()
+
+    random_search = RandomizedSearchCV(
+        knn,
+        param_distributions=param_dist,
+        n_iter=n_iter_search,
+        cv=cv,
+        scoring=make_scorer(multi_class_roc_auc, needs_proba=True, average="macro"),
+        n_jobs=-1,
+    )
+
+    random_search.fit(X_train, y_train)
+
+    # Calculate accuracy
+    accuracy = random_search.best_estimator_.score(X_test, y_test)
+    print(f"Test Accuracy: {accuracy:.4f}")
+
+    # Calculate AUC
+    y_prob = random_search.best_estimator_.predict_proba(X_test)
+    auc = roc_auc_score(y_test, y_prob)
+    print(f"Test AUC: {auc:.4f}")
