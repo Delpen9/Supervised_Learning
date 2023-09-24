@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 
 # Modeling Libraries
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler, label_binarize
 
 # PyTorch Modules
@@ -16,7 +16,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset, random_split
 
 # Model Evaluation
-from sklearn.metrics import roc_auc_score, accuracy_score
+from sklearn.metrics import roc_auc_score, accuracy_score, make_scorer
 
 # Plotting
 import matplotlib.pyplot as plt
@@ -166,7 +166,7 @@ def get_pre_processed_performance_by_value_of_k_knn(
     )
 
 def multi_class_roc_auc(y_true, y_prob, average="macro"):
-    return roc_auc_score(y_true, y_prob, multi_class="ovr", average=average)
+    return roc_auc_score(y_true, y_prob, multi_class="ovr", average="macro")
 
 def tune_knn_with_pre_processing(
     filename="../data/auction_verification_dataset/data.csv",
@@ -205,21 +205,27 @@ def tune_knn_with_pre_processing(
     test_accuracy = random_search.best_estimator_.score(X_test, y_test)
     train_accuracy = random_search.best_estimator_.score(X_train, y_train)
 
+    y_test_bin = label_binarize(y_test, classes=[0, 1, 2])
     y_test_prob = random_search.best_estimator_.predict_proba(X_test)
-    test_auc = roc_auc_score(y_test, y_test_prob)
+    test_auc = roc_auc_score(y_test_bin, y_test_prob, multi_class="ovr", average="macro")
 
+    y_train_bin = label_binarize(y_train, classes=[0, 1, 2])
     y_train_prob = random_search.best_estimator_.predict_proba(X_train)
-    train_auc = roc_auc_score(y_train, y_train_prob)
+    train_auc = roc_auc_score(y_train_bin, y_train_prob, multi_class="ovr", average="macro")
 
     performance_values = [train_accuracy, test_accuracy, train_auc, test_auc]
     performance_labels = ["Training Accuracy", "Test Accuracy", "Training AUC", "Test AUC"]
 
-    plt.figure(figsize=(10,6))
-    plt.bar(labels, float_values, color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'])  # Assigning different colors to each bar
-    plt.xlabel('Values')
-    plt.ylabel('Float Values')
-    plt.title('Bar Plot of Float Values')
-    plt.ylim(0, max(float_values) + 1)
+    plt.figure(figsize=(10, 6))
+    plt.bar(performance_labels, performance_values, color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'])
+    plt.xlabel('Performance Metrics')
+    plt.ylabel('Performance')
+    plt.title('Dropout Dataset: Bar Plot of Performance Metrics')
+    plt.ylim([0.997, 1.0])
 
-    for i in range(len(float_values)):
-        plt.text(i, float_values[i] + 0.1, f"{float_values[i]:.2f}", ha='center')
+    for i in range(len(performance_values)):
+        plt.text(i, performance_values[i] + 0.1, f"{performance_values[i]:.2f}", ha='center')
+
+    plt.savefig(
+        f"../outputs/kNN/pre_processed_k_Neighbors_All_Metrics_Barplot_{dataset_type}_knn.png"
+    )
