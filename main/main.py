@@ -38,12 +38,15 @@ from helper_functions.univariate_multivariate_eda_helper_functions import (
     get_correlation_heatmap,
     get_scatter_plots,
 )
+from helper_functions.kNN_helper_functions import (
+    get_pre_processed_performance_by_value_of_k_knn,
+)
 
 if __name__ == "__main__":
     np.random.seed(1234)
 
     # run_cases = np.arange(1, 13).astype(int) # Run all cases
-    run_cases = [12]
+    run_cases = [14]
 
     if 1 in run_cases:
         get_auction_verification_model_metrics()
@@ -258,4 +261,7 @@ if __name__ == "__main__":
         )
 
     if 14 in run_cases:
-        
+        get_pre_processed_performance_by_value_of_k_knn(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
