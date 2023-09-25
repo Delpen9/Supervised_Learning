@@ -46,8 +46,9 @@ from helper_functions.kNN_helper_functions import (
 if __name__ == "__main__":
     np.random.seed(1234)
 
-    # run_cases = np.arange(1, 13).astype(int) # Run all cases
-    run_cases = [14]
+    run_cases = np.arange(1, 14).astype(int) # Run all cases
+
+    # run_cases = [1] # Use this to customize which cases to run
 
     if 1 in run_cases:
         get_auction_verification_model_metrics()
@@ -262,10 +263,10 @@ if __name__ == "__main__":
         )
 
     if 14 in run_cases:
-        # get_pre_processed_performance_by_value_of_k_knn(
-        #     filename="../data/student_dropout_dataset/data.csv",
-        #     dataset_type="dropout",
-        # )
+        get_pre_processed_performance_by_value_of_k_knn(
+            filename="../data/student_dropout_dataset/data.csv",
+            dataset_type="dropout",
+        )
         tune_knn_with_pre_processing(
             filename="../data/student_dropout_dataset/data.csv",
             dataset_type="dropout",
